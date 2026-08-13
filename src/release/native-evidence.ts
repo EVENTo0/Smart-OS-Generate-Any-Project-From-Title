@@ -19,7 +19,7 @@ export interface NativeVerificationSnapshot {
 }
 
 const expectedArtifacts = {
-  android: { packageName: "snake-android-debug-apk", runtimeName: "snake-android-emulator-evidence" },
+  android: { packageName: "snake-android-debug-apk", runtimeName: "snake-android-runtime-evidence" },
   ios: { packageName: "snake-ios-simulator-app", runtimeName: "snake-ios-simulator-evidence" },
 } as const;
 
