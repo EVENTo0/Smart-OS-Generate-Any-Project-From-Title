@@ -34,6 +34,16 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             build
+      - name: Launch on iPhone Simulator
+        run: |
+          chmod +x scripts/ios-simulator-smoke.sh
+          scripts/ios-simulator-smoke.sh .ci-native/snake-capacitor-ios/derived/Build/Products/Debug-iphonesimulator/App.app
+      - name: Publish iOS Simulator evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: snake-ios-simulator-evidence
+          path: .ci-evidence/ios-simulator
+          if-no-files-found: error
       - name: Publish iOS Simulator app
         uses: actions/upload-artifact@v4
         with:
