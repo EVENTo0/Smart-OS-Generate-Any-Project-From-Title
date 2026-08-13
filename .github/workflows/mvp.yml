@@ -10,3 +10,7 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm test
+      - name: Materialize generated Snake workspace
+        run: npx tsx scripts/generate-snake-ci.ts
+      - name: Controlled Snake web build check
+        run: node --check .ci-workspaces/snake-game/build/src/main.js
