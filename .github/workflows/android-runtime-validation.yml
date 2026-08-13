@@ -1,5 +1,15 @@
 name: Android Runtime Validation
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/generate-snake-ci.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android-runtime-validation.yml'
+concurrency:
+  group: android-runtime-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   runtime:
     runs-on: ubuntu-latest
@@ -34,11 +44,17 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
+      - name: Publish Android debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: snake-android-debug-apk
+          path: .ci-native/snake-capacitor/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
       - name: Install and launch on Android 16 emulator
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
           api-level: 36
-          target: google_apis
+          target: default
           arch: x86_64
           profile: pixel_7
           emulator-options: -no-window -gpu swiftshader -noaudio -no-boot-anim -camera-back none
@@ -49,7 +65,8 @@ jobs:
             adb shell am start -W -n ai.smartos.snake/.MainActivity | tee .ci-evidence/android-runtime/launch.txt
             sleep 3
             adb shell pidof ai.smartos.snake | tee .ci-evidence/android-runtime/pid.txt
-            adb shell dumpsys activity activities | grep ai.smartos.snake > .ci-evidence/android-runtime/activity.txt
+            adb shell dumpsys activity top > .ci-evidence/android-runtime/activity.txt
+            grep -q 'ai.smartos.snake' .ci-evidence/android-runtime/activity.txt
             adb shell input swipe 800 1200 300 1200 250
             sleep 2
             adb exec-out screencap -p > .ci-evidence/android-runtime/screenshot.png
