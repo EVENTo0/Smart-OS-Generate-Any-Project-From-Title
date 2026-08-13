@@ -37,22 +37,26 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Install and launch Snake on Android Emulator
-        uses: reactivecircus/android-emulator-runner@v2.38.0
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
           api-level: 35
           target: default
           arch: x86_64
           profile: pixel_7
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu software -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
             mkdir -p .ci-evidence
+            adb shell input keyevent 224 || true
             adb install -r .ci-native/snake-capacitor/android/app/build/outputs/apk/debug/app-debug.apk
             adb shell am start -W -n ai.smartos.snake/.MainActivity
             sleep 3
             adb shell pidof ai.smartos.snake
             adb shell dumpsys activity top > .ci-evidence/activity-top.txt
             grep -q 'ai.smartos.snake' .ci-evidence/activity-top.txt
+            adb shell uiautomator dump /sdcard/window.xml
+            adb pull /sdcard/window.xml .ci-evidence/window.xml
+            grep -q 'android.webkit.WebView' .ci-evidence/window.xml
             adb exec-out screencap -p > .ci-evidence/snake-android-emulator.png
       - name: Publish emulator evidence
         uses: actions/upload-artifact@v4
@@ -61,4 +65,5 @@ jobs:
           path: |
             .ci-evidence/snake-android-emulator.png
             .ci-evidence/activity-top.txt
+            .ci-evidence/window.xml
           if-no-files-found: error
