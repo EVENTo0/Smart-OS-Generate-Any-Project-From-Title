@@ -22,5 +22,5 @@ All generated files, build plans, logs, test results, artifacts and fix-loop rec
 - Gate 5 execution planner CI: GitHub Actions MVP run #26 — success.
 - Gate 6 release-readiness core CI: GitHub Actions MVP run #27 — success.
 
-## Next
-Gate 7 adds fix-loop orchestration, artifact registry and release-candidate packaging while preserving explicit approval for public/store publishing.
+## Gate 7 handoff
+Next: Fix Loop Orchestrator + Artifact Registry + Release Candidate Packager. It will collect build/test outputs, route failures to the selected specialist capability, preserve iteration history, and generate a release-candidate package without publishing until explicit approval.
