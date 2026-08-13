@@ -1,0 +1,9 @@
+{
+  "name": "SMART OS Mobile Control",
+  "short_name": "SMART OS",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#080b10",
+  "theme_color": "#0b0f14",
+  "description": "Phone-first control surface for SMART OS project generation and verification."
+}

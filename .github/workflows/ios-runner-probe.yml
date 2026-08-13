@@ -1,0 +1,24 @@
+name: iOS Runner Probe
+on: [workflow_dispatch]
+jobs:
+  probe:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Xcode build toolchain
+        run: |
+          command -v xcodebuild
+          xcrun --find simctl
+          xcodebuild -version
+      - name: Record iOS runner capability
+        run: |
+          mkdir -p .ci-evidence
+          XCODEBUILD="$(command -v xcodebuild)"
+          SIMCTL="$(xcrun --find simctl)"
+          printf '{"platform":"ios","hostPlatform":"macos","buildReady":true,"xcodebuild":"%s","simctl":"%s"}\n' "$XCODEBUILD" "$SIMCTL" > .ci-evidence/ios-runner.json
+      - name: Publish iOS runner evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-runner-evidence
+          path: .ci-evidence/ios-runner.json
+          if-no-files-found: error

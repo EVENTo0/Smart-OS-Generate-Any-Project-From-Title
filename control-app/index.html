@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f14">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>SMART OS Control</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#080b10;color:#edf2f7}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#0d121a,#07090d);min-height:100vh}.app{max-width:760px;margin:auto;padding:24px 16px 48px}.brand{font-size:13px;letter-spacing:.16em;color:#80aaff}.hero h1{font-size:34px;line-height:1.05;margin:12px 0}.muted{color:#9aa6b2}.card{background:#111722;border:1px solid #263142;border-radius:18px;padding:16px;margin:14px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:block;font-size:12px;color:#aeb8c5;margin-bottom:6px}input,select,button{width:100%;border-radius:12px;border:1px solid #334155;background:#0b111a;color:#fff;padding:13px;font:inherit}button{background:#2d6cdf;border-color:#4387ff;font-weight:700}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{width:auto;padding:9px 12px;background:#151d29}.chip[data-on="true"]{border-color:#67a3ff;background:#17325c}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.status{font-size:12px;border:1px solid #345;padding:5px 8px;border-radius:999px}.steps{display:grid;gap:8px}.step{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #202a38}.hidden{display:none}@media(max-width:520px){.grid{grid-template-columns:1fr}.hero h1{font-size:30px}}
+  </style>
+</head>
+<body>
+<main class="app">
+  <div class="brand">SMART OS · MOBILE CONTROL</div>
+  <section class="hero"><h1>Generate any project from a title.</h1><p class="muted">Research → DNA → Build → Test → Release evidence.</p></section>
+  <section class="card">
+    <label for="title">Project title or idea</label>
+    <input id="title" value="Snake game" autocomplete="off">
+    <div class="grid" style="margin-top:12px">
+      <div><label for="mode">Mode</label><select id="mode"><option>existing-reference</option><option>new-idea</option><option>hybrid</option></select></div>
+      <div><label for="autonomy">Autonomy</label><select id="autonomy"><option>Guided</option><option>Auto</option><option>Forensic</option><option>Invent</option></select></div>
+    </div>
+    <label style="margin-top:14px">Target platforms</label>
+    <div class="chips" id="platforms"><button class="chip" data-value="web" data-on="true">Web</button><button class="chip" data-value="android" data-on="true">Android</button><button class="chip" data-value="ios" data-on="true">iOS</button><button class="chip" data-value="pc" data-on="false">PC</button><button class="chip" data-value="xr" data-on="false">XR</button></div>
+    <button id="generate" style="margin-top:16px">Generate Project Run</button>
+  </section>
+  <section id="run" class="hidden">
+    <div class="card"><div class="row"><strong id="runTitle"></strong><span class="status" id="runStatus">DRAFT_IDEA</span></div><p class="muted" id="runMeta"></p></div>
+    <div class="card"><strong>Pipeline</strong><div class="steps" id="steps"></div></div>
+    <div class="grid"><div class="card"><strong>Project DNA</strong><p class="muted" id="dna"></p></div><div class="card"><strong>Artifacts</strong><p class="muted">Web build · Android APK · iOS Simulator · runtime evidence</p></div></div>
+    <div class="card"><div class="row"><strong>External release</strong><span class="status">LOCKED</span></div><p class="muted">TestFlight, Play Console and production publishing remain approval-gated.</p></div>
+  </section>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
