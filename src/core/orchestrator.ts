@@ -9,6 +9,7 @@ import { enrichQuestionnaire } from "../research/enrichment";
 import type { ResearchClaimExtractor, ResearchSearchProvider } from "../research/adapters";
 import { selectCapability } from "../capabilities/router";
 import { createBuildManifest } from "../capabilities/build-manifest";
+import { rankMobileStrategies } from "../capabilities/mobile-strategy-score";
 import { generateImplementation } from "../implementation/generator";
 import type { ImplementationBundle } from "../implementation/types";
 import { writeImplementation } from "../implementation/writer";
@@ -28,10 +29,17 @@ function implementationStage(projectId: string, title: string, domain: string, p
   const capability = selectCapability({ requiredTags: ["coding"], requireWorkspaceWrite: true });
   const buildManifest = createBuildManifest(projectId, platforms, capability.id);
   const implementation = generateImplementation({ projectId, title, domain, targetPlatforms: platforms, requirements });
+  const tags = new Set(requirements.map((item) => item.trim().toLowerCase()));
+  const mobileStrategies = rankMobileStrategies({
+    targetPlatforms: platforms,
+    webFirst: implementation.templateId.includes("web"),
+    requiresNativeApis: tags.has("needs-native-apis"),
+    requiresStorePackage: tags.has("requires-store-package"),
+  });
   const executionPlan = createExecutionPlan(projectId, platforms);
   const lanes = adaptersForPlatforms(platforms).map((adapter) => adapter.lane);
   const previews = previewSurfaces(lanes);
-  return { capability, buildManifest, implementation, executionPlan, previews };
+  return { capability, buildManifest, implementation, mobileStrategies, executionPlan, previews };
 }
 
 export function generateProjectImplementation(input: ProjectInput, answers: Record<string, string> = {}) {
