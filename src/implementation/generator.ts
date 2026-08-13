@@ -4,8 +4,49 @@ function json(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
+function snakeSource(): string {
+  return `const canvas=document.querySelector('#game');
+const ctx=canvas.getContext('2d');
+const cell=20, cols=Math.floor(canvas.width/cell), rows=Math.floor(canvas.height/cell);
+let snake,dir,food,score,timer;
+function placeFood(){
+  do { food={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}; }
+  while(snake.some(p=>p.x===food.x&&p.y===food.y));
+}
+function reset(){
+  snake=[{x:8,y:12},{x:7,y:12},{x:6,y:12}]; dir={x:1,y:0}; score=0; placeFood();
+  clearInterval(timer); timer=setInterval(step,110); draw();
+}
+function step(){
+  const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+  const hitWall=head.x<0||head.y<0||head.x>=cols||head.y>=rows;
+  const hitSelf=snake.some(p=>p.x===head.x&&p.y===head.y);
+  if(hitWall||hitSelf){ clearInterval(timer); draw(true); return; }
+  snake.unshift(head);
+  if(head.x===food.x&&head.y===food.y){ score++; placeFood(); } else snake.pop();
+  draw();
+}
+function draw(gameOver=false){
+  ctx.fillStyle='#0b0d10'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#f2f2f2'; ctx.font='16px sans-serif'; ctx.fillText('Score: '+score,12,22);
+  ctx.fillStyle='#7ee787'; snake.forEach(p=>ctx.fillRect(p.x*cell+1,p.y*cell+1,cell-2,cell-2));
+  ctx.fillStyle='#ff7b72'; ctx.fillRect(food.x*cell+2,food.y*cell+2,cell-4,cell-4);
+  if(gameOver){ ctx.fillStyle='rgba(0,0,0,.65)'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.font='22px sans-serif'; ctx.fillText('Game Over',112,285); ctx.font='16px sans-serif'; ctx.fillText('Tap or press Enter to restart',70,318); }
+}
+function setDir(x,y){ if(dir.x===-x&&dir.y===-y)return; dir={x,y}; }
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp')setDir(0,-1); if(e.key==='ArrowDown')setDir(0,1); if(e.key==='ArrowLeft')setDir(-1,0); if(e.key==='ArrowRight')setDir(1,0); if(e.key==='Enter')reset();
+});
+let start=null;
+canvas.addEventListener('pointerdown',e=>{ start={x:e.clientX,y:e.clientY}; if(!timer) reset(); });
+canvas.addEventListener('pointerup',e=>{ if(!start)return; const dx=e.clientX-start.x,dy=e.clientY-start.y; if(Math.abs(dx)>Math.abs(dy))setDir(Math.sign(dx),0); else setDir(0,Math.sign(dy)); start=null; });
+reset();
+`;
+}
+
 export function generateImplementation(request: ImplementationRequest): ImplementationBundle {
-  const templateId = request.domain === "game" ? "web-game-minimal" : "web-app-minimal";
+  const isSnake = request.domain === "game" && /snake/i.test(request.title);
+  const templateId = isSnake ? "snake-web-v1" : request.domain === "game" ? "web-game-minimal" : "web-app-minimal";
   const files = [
     {
       path: "project.json",
@@ -27,11 +68,11 @@ export function generateImplementation(request: ImplementationRequest): Implemen
     files.push(
       {
         path: "index.html",
-        content: "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>SMART OS Game</title></head><body><canvas id=\"game\" width=\"360\" height=\"640\"></canvas><script type=\"module\" src=\"./src/main.js\"></script></body></html>\n",
+        content: "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1\"><title>SMART OS Game</title><style>html,body{margin:0;background:#07090c;color:#fff;font-family:sans-serif}body{display:grid;place-items:center;min-height:100vh}canvas{width:min(92vw,360px);height:auto;border:1px solid #2a2f38;touch-action:none}</style></head><body><canvas id=\"game\" width=\"360\" height=\"640\"></canvas><script type=\"module\" src=\"./src/main.js\"></script></body></html>\n",
       },
       {
         path: "src/main.js",
-        content: "const canvas=document.querySelector('#game');const ctx=canvas.getContext('2d');ctx.fillStyle='#111';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#fff';ctx.font='20px sans-serif';ctx.fillText('SMART OS prototype',70,320);\n",
+        content: isSnake ? snakeSource() : "const canvas=document.querySelector('#game');const ctx=canvas.getContext('2d');ctx.fillStyle='#111';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#fff';ctx.font='20px sans-serif';ctx.fillText('SMART OS prototype',70,320);\n",
       },
     );
   }
