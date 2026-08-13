@@ -21,7 +21,7 @@ test("Android release target requires package and runtime artifacts", () => {
     runtimePassed: true,
     artifacts: [
       { id: "apk", name: "snake-android-debug-apk" },
-      { id: "runtime", name: "snake-android-emulator-evidence" },
+      { id: "runtime", name: "snake-android-runtime-evidence" },
     ],
   }]);
   assert.equal(result.readyForCandidate, true);
