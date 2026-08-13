@@ -1,5 +1,16 @@
-name: iOS Simulator Build
-on: [pull_request]
+name: iOS Simulator Validation
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/generate-snake-ci.ts'
+      - 'scripts/ios-simulator-smoke.sh'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/ios-simulator-build.yml'
+concurrency:
+  group: ios-simulator-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   simulator:
     runs-on: macos-latest
