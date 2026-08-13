@@ -12,6 +12,9 @@ import { createBuildManifest } from "../capabilities/build-manifest";
 import { generateImplementation } from "../implementation/generator";
 import type { ImplementationBundle } from "../implementation/types";
 import { writeImplementation } from "../implementation/writer";
+import { createExecutionPlan } from "../execution/planner";
+import { adaptersForPlatforms } from "../execution/adapters";
+import { previewSurfaces } from "../release/readiness";
 
 export function generateProjectFoundation(input: ProjectInput, answers: Record<string, string> = {}) {
   const intake = runIntake(input);
@@ -21,23 +24,26 @@ export function generateProjectFoundation(input: ProjectInput, answers: Record<s
   return { intake, questions, dna, blueprint };
 }
 
-function implementationFromFoundation(foundation: ReturnType<typeof generateProjectFoundation>) {
+function implementationStage(projectId: string, title: string, domain: string, platforms: string[], requirements: string[]) {
   const capability = selectCapability({ requiredTags: ["coding"], requireWorkspaceWrite: true });
-  const buildManifest = createBuildManifest(foundation.dna.projectId, foundation.dna.platforms, capability.id);
-  const implementation = generateImplementation({
-    projectId: foundation.dna.projectId,
-    title: foundation.dna.title,
-    domain: foundation.dna.domain,
-    targetPlatforms: foundation.dna.platforms,
-    requirements: [...foundation.dna.hardRequirements, ...foundation.dna.constraints],
-  });
-  return { capability, buildManifest, implementation };
+  const buildManifest = createBuildManifest(projectId, platforms, capability.id);
+  const implementation = generateImplementation({ projectId, title, domain, targetPlatforms: platforms, requirements });
+  const executionPlan = createExecutionPlan(projectId, platforms);
+  const lanes = adaptersForPlatforms(platforms).map((adapter) => adapter.lane);
+  const previews = previewSurfaces(lanes);
+  return { capability, buildManifest, implementation, executionPlan, previews };
 }
 
 export function generateProjectImplementation(input: ProjectInput, answers: Record<string, string> = {}) {
   const foundation = generateProjectFoundation(input, answers);
-  const implementationStage = implementationFromFoundation(foundation);
-  return { ...foundation, ...implementationStage };
+  const stage = implementationStage(
+    foundation.dna.projectId,
+    foundation.dna.title,
+    foundation.dna.domain,
+    foundation.dna.platforms,
+    [...foundation.dna.hardRequirements, ...foundation.dna.constraints],
+  );
+  return { ...foundation, ...stage };
 }
 
 export async function materializeProjectImplementation(workspacesRoot: string, bundle: ImplementationBundle) {
@@ -67,14 +73,12 @@ export async function generateEvidenceBackedImplementation(
   answers: Record<string, string> = {},
 ) {
   const foundation = await generateEvidenceBackedFoundation(input, searchProvider, claimExtractor, answers);
-  const capability = selectCapability({ requiredTags: ["coding"], requireWorkspaceWrite: true });
-  const buildManifest = createBuildManifest(foundation.dna.projectId, foundation.dna.platforms, capability.id);
-  const implementation = generateImplementation({
-    projectId: foundation.dna.projectId,
-    title: foundation.dna.title,
-    domain: foundation.dna.domain,
-    targetPlatforms: foundation.dna.platforms,
-    requirements: [...foundation.dna.hardRequirements, ...foundation.dna.constraints],
-  });
-  return { ...foundation, capability, buildManifest, implementation };
+  const stage = implementationStage(
+    foundation.dna.projectId,
+    foundation.dna.title,
+    foundation.dna.domain,
+    foundation.dna.platforms,
+    [...foundation.dna.hardRequirements, ...foundation.dna.constraints],
+  );
+  return { ...foundation, ...stage };
 }
