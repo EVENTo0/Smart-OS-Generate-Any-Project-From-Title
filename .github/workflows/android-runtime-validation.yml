@@ -13,6 +13,7 @@ concurrency:
 jobs:
   runtime:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,7 +44,7 @@ jobs:
           npx cap add android
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon || (sleep 15 && ./gradlew assembleDebug --no-daemon)
       - name: Publish Android debug APK
         uses: actions/upload-artifact@v4
         with:
