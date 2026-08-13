@@ -1,3 +1,7 @@
+import type { ProjectInput } from "./types";
+import type { IntakeResult } from "./intake";
+import type { ProjectQuestion } from "./questionnaire";
+
 export interface ProjectDNA {
   projectId: string;
   title: string;
@@ -12,4 +16,21 @@ export interface ProjectDNA {
 export function makeProjectId(title: string): string {
   const cleaned = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return cleaned || "project";
+}
+
+export function compileProjectDNA(input: ProjectInput, intake: IntakeResult, questions: ProjectQuestion[], answers: Record<string, string> = {}): ProjectDNA {
+  const decisions: Record<string, string> = {};
+  for (const question of questions) decisions[question.id] = answers[question.id] ?? question.recommended;
+  const platforms = intake.platforms.length > 0 ? intake.platforms : [decisions["primary-platform"] ?? "Web/PWA"];
+  const goal = input.description?.trim() || "Build an original project from the supplied idea.";
+  return {
+    projectId: makeProjectId(intake.title),
+    title: intake.title,
+    domain: intake.domain,
+    platforms,
+    goal,
+    constraints: intake.constraints,
+    decisions,
+    status: "provisional",
+  };
 }
