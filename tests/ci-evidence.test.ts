@@ -38,3 +38,20 @@ test("release gate stays blocked until explicit human approval", () => {
   const approved = evaluateReleaseGate({ ...common, targetLanes: [...common.targetLanes], approvedByHuman: true });
   assert.equal(approved.candidate.status, "ready");
 });
+
+test("infrastructure blocker prevents RC without pretending code failed", () => {
+  const result = evaluateReleaseGate({
+    projectId: "snake-game",
+    targetLanes: ["web"],
+    executionResults: [{ commandId: "web-runtime", status: "passed", logRefs: [], artifactRefs: [] }],
+    artifacts: [
+      { id: "build", projectId: "snake-game", kind: "build", location: "ci/build", producedBy: "ci", createdAt: new Date(0).toISOString() },
+      { id: "tests", projectId: "snake-game", kind: "test-report", location: "ci/tests", producedBy: "ci", createdAt: new Date(0).toISOString() },
+    ],
+    infrastructureBlockers: [{ kind: "billing", summary: "Actions unavailable", retryableWithoutCodeChange: true, routeToCodingAgent: false }],
+    approvedByHuman: true,
+  });
+  assert.equal(result.readiness.readyForCandidate, false);
+  assert.ok(result.readiness.blockers.includes("infrastructure blocker: billing"));
+  assert.equal(result.candidate.status, "blocked");
+});
