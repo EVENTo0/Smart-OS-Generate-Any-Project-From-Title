@@ -51,11 +51,14 @@ jobs:
             adb shell am start -W -n ai.smartos.snake/.MainActivity
             sleep 3
             adb shell pidof ai.smartos.snake
-            adb shell dumpsys activity activities | grep -m1 'mResumedActivity.*ai.smartos.snake'
+            adb shell dumpsys activity top > .ci-evidence/activity-top.txt
+            grep -q 'ai.smartos.snake' .ci-evidence/activity-top.txt
             adb exec-out screencap -p > .ci-evidence/snake-android-emulator.png
       - name: Publish emulator evidence
         uses: actions/upload-artifact@v4
         with:
           name: snake-android-emulator-evidence
-          path: .ci-evidence/snake-android-emulator.png
+          path: |
+            .ci-evidence/snake-android-emulator.png
+            .ci-evidence/activity-top.txt
           if-no-files-found: error
