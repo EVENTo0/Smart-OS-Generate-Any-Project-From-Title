@@ -1,0 +1,20 @@
+{
+  "project": {"title":"Snake game","domain":"game","mode":"existing-reference"},
+  "retrievedAt": "2026-08-13",
+  "sources": [
+    {"id":"snake-history-1","url":"https://blogs.windows.com/devices/2009/01/20/history-of-nokia-part-2-snake/","title":"History of Nokia part 2: Snake","publisher":"Microsoft Devices Blog / Nokia history","tier":2},
+    {"id":"nokia-archive-1","url":"https://www.aalto.fi/en/nokia-design-archive","title":"Nokia Design Archive","publisher":"Aalto University","tier":2},
+    {"id":"nokia-archive-2","url":"https://www.aalto.fi/en/news/the-visions-that-shaped-us-nokia-design-archive-opens-to-the-public-online","title":"The visions that shaped us: Nokia Design Archive opens to the public online","publisher":"Aalto University","tier":2}
+  ],
+  "claims": [
+    {"id":"snake-nokia-6110","text":"The Nokia version of Snake was launched on the Nokia 6110.","kind":"fact","confidence":"high","sourceIds":["snake-history-1"],"tags":["history","reference-project"]},
+    {"id":"snake-armanto-1997","text":"Taneli Armanto, a Nokia design engineer, programmed Snake into a Nokia device in 1997.","kind":"fact","confidence":"high","sourceIds":["snake-history-1"],"tags":["history","developer"]},
+    {"id":"snake-pre-nokia","text":"Snake-like games existed on earlier computers and calculators before Nokia's 1997 phone implementation.","kind":"fact","confidence":"high","sourceIds":["snake-history-1"],"tags":["history","comparable"]},
+    {"id":"snake-nokia-era","text":"Snake was part of the everyday mobile-phone experience associated with Nokia's 1990s and early-2000s era.","kind":"inference","confidence":"high","sourceIds":["nokia-archive-1","nokia-archive-2"],"tags":["context","product-era"]}
+  ],
+  "abstentions": [
+    {"question":"What programming language was used for the original 1997 Nokia implementation?","status":"not-established","reason":"The reviewed authoritative sources do not establish the implementation language. SMART OS must research further rather than guess."}
+  ],
+  "allowedPatternLearning": ["compact arcade loop","mobile-first simplicity","short-session play","general snake/growth/navigation mechanics after separate mechanics evidence is collected"],
+  "protectedExpressionPolicy": "Do not copy Nokia branding, proprietary source code, original assets, exact protected artwork, or confusingly similar product identity."
+}
