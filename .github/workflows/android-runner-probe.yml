@@ -1,5 +1,5 @@
 name: Android Runner Probe
-on: [pull_request]
+on: [workflow_dispatch]
 jobs:
   probe:
     runs-on: ubuntu-latest
