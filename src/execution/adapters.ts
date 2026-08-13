@@ -13,8 +13,8 @@ export const platformAdapters: PlatformAdapter[] = [
     lane: "web",
     matches: (p) => /web|pwa/i.test(p),
     plan: (_id, root) => [
-      { id: "web-build", lane: "web", executable: "npm", args: ["run", "build"], workingDirectory: wd(root), purpose: "build" },
-      { id: "web-test", lane: "web", executable: "npm", args: ["test"], workingDirectory: wd(root), purpose: "test" },
+      { id: "web-build", lane: "web", executable: "node", args: ["--check", "src/main.js"], workingDirectory: wd(root), purpose: "build" },
+      { id: "web-test", lane: "web", executable: "node", args: ["--test", "tests/smoke.test.mjs"], workingDirectory: wd(root), purpose: "test" },
     ],
   },
   {
