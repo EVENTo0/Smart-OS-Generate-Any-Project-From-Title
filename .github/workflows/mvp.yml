@@ -14,3 +14,9 @@ jobs:
         run: npx tsx scripts/generate-snake-ci.ts
       - name: Controlled Snake web build check
         run: node --check .ci-workspaces/snake-game/build/src/main.js
+      - name: Publish generated Snake build
+        uses: actions/upload-artifact@v4
+        with:
+          name: snake-generated-web-build
+          path: .ci-workspaces/snake-game/build
+          if-no-files-found: error
