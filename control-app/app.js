@@ -236,7 +236,7 @@ async function verifyApprovalCapability(){
     const capability=await gatewayFetch('GET');
     approvalCapability=capability.authenticatedApproval===true&&capability.publicPublishAllowed===false;
     $('#approvalCapability').textContent=approvalCapability
-      ?'Authenticated one-time approval gateway verified. Public publishing remains separately locked.'
+      ?'Authenticated one-time approval gateway verified. A backend-registered exact request is still required before approval. Public publishing remains separately locked.'
       :'Approval gateway did not advertise the required safe capability.';
   }catch(error){
     $('#approvalCapability').textContent=error instanceof Error?error.message:'Approval gateway unavailable.';
@@ -252,7 +252,7 @@ async function refreshAuthUi(){
   $('#authForm').classList.toggle('hidden',signedIn);
   $('#signOut').classList.toggle('hidden',!signedIn);
   $('#authMessage').textContent=signedIn
-    ?`Authenticated as ${session.user.email||session.user.id}. Approval still requires an exact scoped request.`
+    ?`Authenticated as ${session.user.email||session.user.id}. Approval still requires an exact scoped request assigned to this account.`
     :'Sign in to the isolated SMART OS Supabase project before approving a release candidate.';
   if(signedIn)await verifyApprovalCapability();
   else{
