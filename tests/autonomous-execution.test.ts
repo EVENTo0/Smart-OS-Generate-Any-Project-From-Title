@@ -30,6 +30,9 @@ const runners: RunnerCapabilityAdvertisement[] = [
     allowsSecrets: false,
     allowsPublicPublish: false,
     quality: 5,
+    privacy: 5,
+    cost: 5,
+    latency: 5,
     availability: "available",
   },
   {
@@ -45,6 +48,8 @@ const runners: RunnerCapabilityAdvertisement[] = [
     local: true,
     quality: 4,
     privacy: 5,
+    cost: 5,
+    latency: 4,
     availability: "available",
   },
 ];
