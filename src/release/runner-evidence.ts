@@ -23,7 +23,8 @@ export interface RunnerEvidenceSnapshot {
   runnerId: string;
   runnerKind: string;
   runId: string;
-  commitSha: string;
+  commitSha?: string;
+  sourceArtifactDigest?: string;
   conclusion: "success" | "failure" | "blocked";
   commands: RunnerCommandEvidence[];
   artifacts: RunnerArtifactEvidence[];
@@ -36,7 +37,8 @@ export interface RunnerReleaseEvidence {
   projectId: string;
   runnerId: string;
   runId: string;
-  commitSha: string;
+  commitSha?: string;
+  sourceArtifactDigest?: string;
   verified: boolean;
   blockers: string[];
   executionResults: ExecutionResult[];
@@ -49,6 +51,9 @@ export function ingestRunnerEvidence(snapshot: RunnerEvidenceSnapshot): RunnerRe
   const blockers: string[] = [];
   const infrastructureBlockers = snapshot.infrastructureBlocker ? [snapshot.infrastructureBlocker] : [];
 
+  if (!snapshot.commitSha && !snapshot.sourceArtifactDigest) {
+    blockers.push("runner source provenance missing");
+  }
   if (snapshot.conclusion !== "success") blockers.push(`runner conclusion: ${snapshot.conclusion}`);
   for (const commandId of snapshot.requiredCommandIds ?? []) {
     if (!snapshot.commands.some((command) => command.commandId === commandId && command.status === "passed")) {
@@ -70,27 +75,33 @@ export function ingestRunnerEvidence(snapshot: RunnerEvidenceSnapshot): RunnerRe
     summary: command.summary,
   }));
 
-  const artifactRecords: ArtifactRecord[] = snapshot.artifacts.map((artifact) => ({
-    id: `${snapshot.runnerId}-${artifact.id}`,
-    projectId: snapshot.projectId,
-    kind: artifact.kind,
-    location: `runner/${snapshot.runnerId}/run/${snapshot.runId}/artifact/${artifact.id}`,
-    producedBy: snapshot.runnerId,
-    createdAt: new Date(0).toISOString(),
-    checksum: artifact.checksum,
-    metadata: {
-      commitSha: snapshot.commitSha,
+  const artifactRecords: ArtifactRecord[] = snapshot.artifacts.map((artifact) => {
+    const metadata: Record<string, string> = {
       artifactName: artifact.name,
       runnerKind: snapshot.runnerKind,
       runId: snapshot.runId,
-    },
-  }));
+    };
+    if (snapshot.commitSha) metadata.commitSha = snapshot.commitSha;
+    if (snapshot.sourceArtifactDigest) metadata.sourceArtifactDigest = snapshot.sourceArtifactDigest;
+
+    return {
+      id: `${snapshot.runnerId}-${artifact.id}`,
+      projectId: snapshot.projectId,
+      kind: artifact.kind,
+      location: `runner/${snapshot.runnerId}/run/${snapshot.runId}/artifact/${artifact.id}`,
+      producedBy: snapshot.runnerId,
+      createdAt: new Date(0).toISOString(),
+      checksum: artifact.checksum,
+      metadata,
+    };
+  });
 
   return {
     projectId: snapshot.projectId,
     runnerId: snapshot.runnerId,
     runId: snapshot.runId,
     commitSha: snapshot.commitSha,
+    sourceArtifactDigest: snapshot.sourceArtifactDigest,
     verified: blockers.length === 0 && infrastructureBlockers.length === 0,
     blockers,
     executionResults,
