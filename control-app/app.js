@@ -2,6 +2,7 @@ const platformButtons=[...document.querySelectorAll('.chip')];
 platformButtons.forEach(button=>button.addEventListener('click',()=>{button.dataset.on=button.dataset.on==='true'?'false':'true'}));
 
 const $=selector=>document.querySelector(selector);
+const SAFE_HISTORY_PATH=/^history\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+\.json$/;
 
 function statusStep(label,value){
   const row=document.createElement('div');
@@ -28,7 +29,17 @@ function renderAttempts(attempts=[]){
   });
 }
 
+function isValidSnapshot(snapshot){
+  return snapshot?.schemaVersion==='1'
+    && typeof snapshot.projectId==='string'
+    && snapshot.projectId.length>0
+    && snapshot.policy?.exposesSecrets===false
+    && snapshot.policy?.exposesRawLogs===false
+    && snapshot.policy?.allowsPublicPublish===false;
+}
+
 function renderSnapshot(snapshot,dataMode){
+  if(!isValidSnapshot(snapshot))throw new Error('invalid or unsafe snapshot');
   $('#dataMode').textContent=dataMode;
   $('#runTitle').textContent=snapshot.title||snapshot.projectId||'SMART OS run';
   $('#runStatus').textContent=snapshot.lifecycleState||'DRAFT_IDEA';
@@ -82,21 +93,87 @@ function createLocalDemo(){
   };
 }
 
+async function fetchJson(path){
+  const response=await fetch(path,{cache:'no-store'});
+  if(!response.ok)throw new Error(`request unavailable: ${response.status}`);
+  return response.json();
+}
+
+async function loadSnapshotPath(path,dataMode='HISTORY SNAPSHOT'){
+  if(path!=='./run-snapshot.json'&&!SAFE_HISTORY_PATH.test(path.replace(/^\.\//,''))){
+    throw new Error('unsafe snapshot path');
+  }
+  const snapshot=await fetchJson(path);
+  renderSnapshot(snapshot,dataMode);
+  return snapshot;
+}
+
+function renderHistory(entries=[]){
+  const root=$('#history');
+  root.replaceChildren();
+  if(!entries.length){root.textContent='No persisted run history available.';return;}
+
+  entries.slice(0,20).forEach(entry=>{
+    if(!entry||!SAFE_HISTORY_PATH.test(entry.historyPath||''))return;
+    const row=document.createElement('div');
+    row.className='history-item';
+    const button=document.createElement('button');
+    button.className='secondary';
+    button.type='button';
+    button.textContent=`${entry.title||entry.projectId} · ${entry.lifecycleState||'unknown'} · ${Number.isFinite(entry.releaseScore)?entry.releaseScore:0}% · ${entry.candidateStatus||'unknown'}`;
+    button.addEventListener('click',async()=>{
+      button.disabled=true;
+      try{
+        await loadSnapshotPath(`./${entry.historyPath}`,'HISTORY SNAPSHOT');
+        $('#run').scrollIntoView({behavior:'smooth'});
+      }catch{
+        $('#dataMode').textContent='HISTORY UNAVAILABLE';
+      }finally{
+        button.disabled=false;
+      }
+    });
+    row.append(button);
+    root.append(row);
+  });
+
+  if(!root.children.length)root.textContent='No valid history entries available.';
+}
+
+async function loadHistory(){
+  try{
+    const entries=await fetchJson('./history/index.json');
+    renderHistory(Array.isArray(entries)?entries:[]);
+  }catch{
+    renderHistory([]);
+  }
+}
+
+async function loadLiveSnapshot(){
+  try{
+    await loadSnapshotPath('./run-snapshot.json','LIVE SNAPSHOT');
+    return true;
+  }catch{
+    $('#dataMode').textContent='OFFLINE / DEMO';
+    return false;
+  }
+}
+
+async function refreshControlData(){
+  const button=$('#refresh');
+  button.disabled=true;
+  button.textContent='Refreshing…';
+  try{
+    await Promise.all([loadLiveSnapshot(),loadHistory()]);
+  }finally{
+    button.disabled=false;
+    button.textContent='Refresh Live Snapshot';
+  }
+}
+
 $('#generate').addEventListener('click',()=>{
   renderSnapshot(createLocalDemo(),'LOCAL DEMO');
   $('#run').scrollIntoView({behavior:'smooth'});
 });
 
-async function loadLiveSnapshot(){
-  try{
-    const response=await fetch('./run-snapshot.json',{cache:'no-store'});
-    if(!response.ok)throw new Error(`snapshot unavailable: ${response.status}`);
-    const snapshot=await response.json();
-    if(snapshot?.schemaVersion!=='1'||!snapshot.projectId)throw new Error('invalid snapshot');
-    renderSnapshot(snapshot,'LIVE SNAPSHOT');
-  }catch{
-    $('#dataMode').textContent='OFFLINE / DEMO';
-  }
-}
-
-loadLiveSnapshot();
+$('#refresh').addEventListener('click',refreshControlData);
+refreshControlData();
