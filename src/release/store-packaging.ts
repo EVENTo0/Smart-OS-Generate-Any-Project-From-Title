@@ -92,7 +92,15 @@ export function createStorePackagingPlan(input: {
 }): StorePackagingPlan {
   if (!input.workspaceRoot || input.workspaceRoot.includes("..")) throw new Error("Unsafe workspace root");
   if (input.promotion.publicPublishAuthorized !== false) throw new Error("Promotion must not authorize public publishing");
-  const targets = new Set(input.targetLanes);
+
+  const approvedTargets = new Set(input.promotion.targetLanes);
+  const requestedTargets = [...new Set(input.targetLanes)];
+  const unauthorized = requestedTargets.filter((lane) => !approvedTargets.has(lane));
+  if (unauthorized.length) {
+    throw new Error(`Store packaging target was not covered by the approved release scope: ${unauthorized.join(",")}`);
+  }
+
+  const targets = new Set(requestedTargets);
   const available = new Set(input.availableSecretRefs ?? []);
   const packageTargets: StorePackageTarget[] = [];
   if (targets.has("android")) packageTargets.push(androidTarget(input.workspaceRoot, available));
