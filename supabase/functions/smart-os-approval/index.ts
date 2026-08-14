@@ -18,8 +18,6 @@ const env = (name: string) => {
   return value;
 };
 
-// Current Supabase projects expose named publishable/secret key sets. Legacy
-// single-key env vars remain as compatibility fallbacks for older/local setups.
 const namedKey = (setName: "SUPABASE_PUBLISHABLE_KEYS" | "SUPABASE_SECRET_KEYS") => {
   const raw = Deno.env.get(setName);
   if (!raw) return "";
@@ -68,30 +66,59 @@ Deno.serve(async (req: Request) => {
     if (userError || !userData.user) return json({ error: "invalid authenticated session" }, 401);
     const user = userData.user;
 
+    const admin = createClient(supabaseUrl, secret, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const now = new Date();
+    const nowIso = now.toISOString();
+
     if (req.method === "GET") {
+      const { data: pending, error: pendingError } = await admin
+        .from("smart_os_approval_requests")
+        .select("request_id,project_id,fingerprint,target_lanes,artifact_ids,evidence_refs,requested_at,expires_at,status")
+        .eq("approver_user_id", user.id)
+        .eq("status", "pending")
+        .gt("expires_at", nowIso)
+        .order("requested_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (pendingError) return json({ error: "approval request lookup failed" }, 500);
+
+      const approvalRequest = pending ? {
+        schemaVersion: "1",
+        requestId: pending.request_id,
+        projectId: pending.project_id,
+        candidateFingerprint: pending.fingerprint,
+        targetLanes: Array.isArray(pending.target_lanes) ? pending.target_lanes : [],
+        artifactCount: Array.isArray(pending.artifact_ids) ? pending.artifact_ids.length : 0,
+        evidenceCount: Array.isArray(pending.evidence_refs) ? pending.evidence_refs.length : 0,
+        requestedAt: pending.requested_at,
+        expiresAt: pending.expires_at,
+        browserCanSelfApprove: false,
+        containsVerifierCredential: false,
+        containsOpaqueProof: false,
+      } : null;
+
       return json({
         authenticatedApproval: true,
         provider: "supabase-auth",
         oneTimeChallenge: true,
         browserHasReleaseCredentials: false,
         publicPublishAllowed: false,
+        approvalRequest,
       });
     }
 
     if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
 
-    const admin = createClient(supabaseUrl, secret, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
     const body = await req.json().catch(() => null) as Record<string, unknown> | null;
     if (!body || typeof body.action !== "string") return json({ error: "invalid request body" }, 400);
 
     const requestId = typeof body.requestId === "string" ? body.requestId : "";
     const fingerprint = body.fingerprint;
     if (!requestId || !validFingerprint(fingerprint)) return json({ error: "invalid requestId or fingerprint" }, 400);
-
-    const now = new Date();
-    const nowIso = now.toISOString();
 
     const { data: approvalRequest, error: requestError } = await admin
       .from("smart_os_approval_requests")
