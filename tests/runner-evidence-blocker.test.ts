@@ -21,7 +21,9 @@ test("blocked runner evidence remains infrastructure-only", () => {
   });
 
   assert.equal(evidence.verified, false);
+  assert.equal(evidence.projectId, "snake-game");
   assert.equal(evidence.runnerId, "github-actions");
+  assert.equal(evidence.runId, "blocked-1");
   assert.equal(evidence.infrastructureBlockers[0]?.kind, "billing");
   assert.equal(evidence.executionResults[0]?.fixCapabilityId, undefined);
 });
