@@ -13,6 +13,7 @@ const $=selector=>document.querySelector(selector);
 const SAFE_HISTORY_PATH=/^history\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+\.json$/;
 let currentApprovalView=null;
 let approvalCapability=false;
+let authRefreshQueued=false;
 
 function statusStep(label,value){
   const row=document.createElement('div');
@@ -261,6 +262,15 @@ async function refreshAuthUi(){
   }
 }
 
+function scheduleAuthRefresh(){
+  if(authRefreshQueued)return;
+  authRefreshQueued=true;
+  queueMicrotask(async()=>{
+    authRefreshQueued=false;
+    await refreshAuthUi();
+  });
+}
+
 async function signIn(){
   const email=$('#authEmail').value.trim();
   const password=$('#authPassword').value;
@@ -342,5 +352,5 @@ $('#signUp').addEventListener('click',signUp);
 $('#signOut').addEventListener('click',async()=>{await supabase.auth.signOut();await refreshAuthUi();});
 $('#approveRelease').addEventListener('click',()=>submitApprovalDecision('approve'));
 $('#rejectRelease').addEventListener('click',()=>submitApprovalDecision('reject'));
-supabase.auth.onAuthStateChange(()=>{queueMicrotask(refreshAuthUi);});
+supabase.auth.onAuthStateChange(scheduleAuthRefresh);
 refreshControlData();
