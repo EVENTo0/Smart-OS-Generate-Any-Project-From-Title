@@ -5,15 +5,16 @@ const supabase=createClient(SMART_OS_SUPABASE_URL,SMART_OS_SUPABASE_PUBLISHABLE_
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true},
 });
 const APPROVAL_ENDPOINT=`${SMART_OS_SUPABASE_URL}/functions/v1/smart-os-approval`;
-
-const platformButtons=[...document.querySelectorAll('.chip')];
-platformButtons.forEach(button=>button.addEventListener('click',()=>{button.dataset.on=button.dataset.on==='true'?'false':'true'}));
-
 const $=selector=>document.querySelector(selector);
+const platformButtons=[...document.querySelectorAll('.chip')];
 const SAFE_HISTORY_PATH=/^history\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+\.json$/;
 let currentApprovalView=null;
 let approvalCapability=false;
 let authRefreshQueued=false;
+
+platformButtons.forEach(button=>button.addEventListener('click',()=>{
+  button.dataset.on=button.dataset.on==='true'?'false':'true';
+}));
 
 function statusStep(label,value){
   const row=document.createElement('div');
@@ -59,8 +60,7 @@ function isSafeApprovalView(view){
 }
 
 function updateApprovalActionVisibility(){
-  const visible=Boolean(currentApprovalView&&approvalCapability);
-  $('#approvalActions').classList.toggle('hidden',!visible);
+  $('#approvalActions').classList.toggle('hidden',!(currentApprovalView&&approvalCapability));
 }
 
 function renderApprovalView(view){
@@ -71,6 +71,13 @@ function renderApprovalView(view){
   $('#approvalRequestStatus').classList.add('warn');
   $('#approvalRequestMeta').textContent=`${view.requestId} · ${(view.targetLanes||[]).join(', ')||'no targets'} · ${view.artifactCount||0} artifact(s) · expires ${view.expiresAt}`;
   $('#approvalFingerprint').textContent=view.candidateFingerprint;
+  if($('#run').classList.contains('hidden')){
+    $('#runTitle').textContent=view.projectId||'SMART OS release candidate';
+    $('#runStatus').textContent='APPROVAL_PENDING';
+    $('#runMeta').textContent=`${(view.targetLanes||[]).join(', ')||'no targets'} · live scoped approval`;
+    $('#dataMode').textContent='LIVE APPROVAL';
+    $('#run').classList.remove('hidden');
+  }
   updateApprovalActionVisibility();
 }
 
@@ -78,7 +85,7 @@ function clearApprovalView(){
   currentApprovalView=null;
   $('#approvalRequestStatus').textContent='NONE';
   $('#approvalRequestStatus').classList.remove('warn','good');
-  $('#approvalRequestMeta').textContent='No verified approval request has been materialized.';
+  $('#approvalRequestMeta').textContent='No active scoped approval request is assigned to this account.';
   $('#approvalFingerprint').textContent='';
   updateApprovalActionVisibility();
 }
@@ -98,8 +105,7 @@ function renderSnapshot(snapshot,dataMode){
   $('#runnerStatus').textContent=execution.status||'not-started';
   renderAttempts(execution.attempts||[]);
 
-  const steps=$('#steps');
-  steps.replaceChildren(
+  $('#steps').replaceChildren(
     statusStep('Lifecycle',snapshot.lifecycleState||'DRAFT_IDEA'),
     statusStep('Execution',execution.status||'not-started'),
     statusStep('Artifacts',String((snapshot.artifacts||[]).length)),
@@ -111,7 +117,6 @@ function renderSnapshot(snapshot,dataMode){
   $('#artifacts').textContent=(snapshot.artifacts||[]).length
     ? snapshot.artifacts.map(item=>`${item.kind} · ${item.producedBy}`).join(' | ')
     : 'None yet.';
-
   const blockers=release.blockers||[];
   $('#blockers').textContent=blockers.length?blockers.join(' · '):'No active release blockers.';
   const ready=release.candidateStatus==='ready';
@@ -145,9 +150,7 @@ async function fetchJson(path){
 }
 
 async function loadSnapshotPath(path,dataMode='HISTORY SNAPSHOT'){
-  if(path!=='./run-snapshot.json'&&!SAFE_HISTORY_PATH.test(path.replace(/^\.\//,''))){
-    throw new Error('unsafe snapshot path');
-  }
+  if(path!=='./run-snapshot.json'&&!SAFE_HISTORY_PATH.test(path.replace(/^\.\//,'')))throw new Error('unsafe snapshot path');
   const snapshot=await fetchJson(path);
   renderSnapshot(snapshot,dataMode);
   return snapshot;
@@ -157,7 +160,6 @@ function renderHistory(entries=[]){
   const root=$('#history');
   root.replaceChildren();
   if(!entries.length){root.textContent='No persisted run history available.';return;}
-
   entries.slice(0,20).forEach(entry=>{
     if(!entry||!SAFE_HISTORY_PATH.test(entry.historyPath||''))return;
     const row=document.createElement('div');
@@ -173,43 +175,22 @@ function renderHistory(entries=[]){
         $('#run').scrollIntoView({behavior:'smooth'});
       }catch{
         $('#dataMode').textContent='HISTORY UNAVAILABLE';
-      }finally{
-        button.disabled=false;
-      }
+      }finally{button.disabled=false;}
     });
     row.append(button);
     root.append(row);
   });
-
   if(!root.children.length)root.textContent='No valid history entries available.';
 }
 
 async function loadHistory(){
-  try{
-    const entries=await fetchJson('./history/index.json');
-    renderHistory(Array.isArray(entries)?entries:[]);
-  }catch{
-    renderHistory([]);
-  }
-}
-
-async function loadApprovalRequest(){
-  try{
-    const view=await fetchJson('./approval-request.json');
-    renderApprovalView(view);
-  }catch{
-    clearApprovalView();
-  }
+  try{renderHistory(await fetchJson('./history/index.json'));}
+  catch{renderHistory([]);}
 }
 
 async function loadLiveSnapshot(){
-  try{
-    await loadSnapshotPath('./run-snapshot.json','LIVE SNAPSHOT');
-    return true;
-  }catch{
-    $('#dataMode').textContent='OFFLINE / DEMO';
-    return false;
-  }
+  try{await loadSnapshotPath('./run-snapshot.json','LIVE SNAPSHOT');return true;}
+  catch{$('#dataMode').textContent='OFFLINE / APPROVAL';return false;}
 }
 
 async function gatewayFetch(method,body){
@@ -219,8 +200,8 @@ async function gatewayFetch(method,body){
     method,
     headers:{
       'Content-Type':'application/json',
-      'apikey':SMART_OS_SUPABASE_PUBLISHABLE_KEY,
-      'Authorization':`Bearer ${session.access_token}`,
+      apikey:SMART_OS_SUPABASE_PUBLISHABLE_KEY,
+      Authorization:`Bearer ${session.access_token}`,
     },
     body:body?JSON.stringify(body):undefined,
   });
@@ -231,14 +212,24 @@ async function gatewayFetch(method,body){
 
 async function verifyApprovalCapability(){
   approvalCapability=false;
-  $('#approvalCapability').textContent='Authenticated approval capability unavailable until sign-in.';
+  $('#approvalCapability').textContent='Checking authenticated approval capability…';
   try{
     const capability=await gatewayFetch('GET');
-    approvalCapability=capability.authenticatedApproval===true&&capability.publicPublishAllowed===false;
-    $('#approvalCapability').textContent=approvalCapability
-      ?'Authenticated one-time approval gateway verified. A backend-registered exact request is still required before approval. Public publishing remains separately locked.'
-      :'Approval gateway did not advertise the required safe capability.';
+    approvalCapability=capability.authenticatedApproval===true
+      && capability.oneTimeChallenge===true
+      && capability.browserHasReleaseCredentials===false
+      && capability.publicPublishAllowed===false;
+    if(approvalCapability&&isSafeApprovalView(capability.approvalRequest)){
+      renderApprovalView(capability.approvalRequest);
+      $('#approvalCapability').textContent='Authenticated one-time approval gateway verified. This request is bound to the exact candidate fingerprint. Public publishing remains separately locked.';
+    }else{
+      clearApprovalView();
+      $('#approvalCapability').textContent=approvalCapability
+        ?'Gateway verified. No active scoped approval request is assigned to this account.'
+        :'Approval gateway did not advertise the required safe capability.';
+    }
   }catch(error){
+    clearApprovalView();
     $('#approvalCapability').textContent=error instanceof Error?error.message:'Approval gateway unavailable.';
   }
   updateApprovalActionVisibility();
@@ -252,13 +243,13 @@ async function refreshAuthUi(){
   $('#authForm').classList.toggle('hidden',signedIn);
   $('#signOut').classList.toggle('hidden',!signedIn);
   $('#authMessage').textContent=signedIn
-    ?`Authenticated as ${session.user.email||session.user.id}. Approval still requires an exact scoped request assigned to this account.`
+    ?`Authenticated as ${session.user.email||session.user.id}. Approval remains scoped to the exact backend request.`
     :'Sign in to the isolated SMART OS Supabase project before approving a release candidate.';
   if(signedIn)await verifyApprovalCapability();
   else{
     approvalCapability=false;
+    clearApprovalView();
     $('#approvalCapability').textContent='Authenticated approval capability unavailable until sign-in.';
-    updateApprovalActionVisibility();
   }
 }
 
@@ -319,7 +310,8 @@ async function submitApprovalDecision(decision){
     $('#approvalRequestStatus').classList.toggle('good',approved);
     $('#approvalRequestStatus').classList.toggle('warn',!approved);
     $('#approvalRequestMeta').textContent=`Verified by ${result.verifierId} at ${result.decidedAt}. Public publish authorization: false.`;
-    $('#approvalActions').classList.add('hidden');
+    currentApprovalView=null;
+    updateApprovalActionVisibility();
   }catch(error){
     $('#approvalRequestStatus').textContent='FAILED';
     $('#approvalRequestStatus').classList.add('warn');
@@ -334,7 +326,8 @@ async function refreshControlData(){
   button.disabled=true;
   button.textContent='Refreshing…';
   try{
-    await Promise.all([loadLiveSnapshot(),loadHistory(),loadApprovalRequest(),refreshAuthUi()]);
+    await Promise.all([loadLiveSnapshot(),loadHistory()]);
+    await refreshAuthUi();
   }finally{
     button.disabled=false;
     button.textContent='Refresh Live Snapshot';
@@ -342,7 +335,6 @@ async function refreshControlData(){
 }
 
 $('#generate').addEventListener('click',()=>{
-  clearApprovalView();
   renderSnapshot(createLocalDemo(),'LOCAL DEMO');
   $('#run').scrollIntoView({behavior:'smooth'});
 });
