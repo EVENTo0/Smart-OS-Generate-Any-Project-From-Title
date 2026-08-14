@@ -59,7 +59,7 @@ export function createMultiRunnerExecution(input: {
     attempts: [],
     status: "running",
     selectedRunnerId: queue[0],
-    infrastructureBlockers: route.infrastructureBlockers,
+    infrastructureBlockers: [],
   };
 }
 
