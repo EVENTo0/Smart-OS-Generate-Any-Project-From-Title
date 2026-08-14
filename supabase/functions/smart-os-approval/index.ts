@@ -18,8 +18,29 @@ const env = (name: string) => {
   return value;
 };
 
-const publicKey = () => Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const secretKey = () => Deno.env.get("SUPABASE_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const namedKey = (setName: "SUPABASE_PUBLISHABLE_KEYS" | "SUPABASE_SECRET_KEYS") => {
+  const raw = Deno.env.get(setName);
+  if (!raw) return "";
+  try {
+    const names = JSON.parse(raw) as Record<string, string>;
+    const envName = names.default ?? Object.values(names)[0];
+    return envName ? Deno.env.get(envName) ?? "" : "";
+  } catch {
+    return "";
+  }
+};
+
+const publicKey = () =>
+  namedKey("SUPABASE_PUBLISHABLE_KEYS") ||
+  Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ||
+  Deno.env.get("SUPABASE_ANON_KEY") ||
+  "";
+
+const secretKey = () =>
+  namedKey("SUPABASE_SECRET_KEYS") ||
+  Deno.env.get("SUPABASE_SECRET_KEY") ||
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+  "";
 
 const validFingerprint = (value: unknown): value is string =>
   typeof value === "string" && /^sha256:[0-9a-f]{64}$/.test(value);
@@ -40,7 +61,8 @@ Deno.serve(async (req: Request) => {
       global: { headers: { Authorization: authorization } },
       auth: { persistSession: false, autoRefreshToken: false },
     });
-    const { data: userData, error: userError } = await userClient.auth.getUser();
+    const token = authorization.slice("Bearer ".length);
+    const { data: userData, error: userError } = await userClient.auth.getUser(token);
     if (userError || !userData.user) return json({ error: "invalid authenticated session" }, 401);
     const user = userData.user;
 
