@@ -38,6 +38,30 @@ function isValidSnapshot(snapshot){
     && snapshot.policy?.allowsPublicPublish===false;
 }
 
+function isSafeApprovalView(view){
+  return view?.schemaVersion==='1'
+    && typeof view.requestId==='string'
+    && /^sha256:[a-f0-9]{64}$/i.test(view.candidateFingerprint||'')
+    && view.browserCanSelfApprove===false
+    && view.containsVerifierCredential===false
+    && view.containsOpaqueProof===false;
+}
+
+function renderApprovalView(view){
+  if(!isSafeApprovalView(view))throw new Error('invalid or unsafe approval view');
+  $('#approvalRequestStatus').textContent='PENDING';
+  $('#approvalRequestStatus').classList.add('warn');
+  $('#approvalRequestMeta').textContent=`${view.requestId} · ${(view.targetLanes||[]).join(', ')||'no targets'} · ${view.artifactCount||0} artifact(s) · expires ${view.expiresAt}`;
+  $('#approvalFingerprint').textContent=view.candidateFingerprint;
+}
+
+function clearApprovalView(){
+  $('#approvalRequestStatus').textContent='NONE';
+  $('#approvalRequestStatus').classList.remove('warn','good');
+  $('#approvalRequestMeta').textContent='No verified approval request has been materialized.';
+  $('#approvalFingerprint').textContent='';
+}
+
 function renderSnapshot(snapshot,dataMode){
   if(!isValidSnapshot(snapshot))throw new Error('invalid or unsafe snapshot');
   $('#dataMode').textContent=dataMode;
@@ -148,6 +172,15 @@ async function loadHistory(){
   }
 }
 
+async function loadApprovalRequest(){
+  try{
+    const view=await fetchJson('./approval-request.json');
+    renderApprovalView(view);
+  }catch{
+    clearApprovalView();
+  }
+}
+
 async function loadLiveSnapshot(){
   try{
     await loadSnapshotPath('./run-snapshot.json','LIVE SNAPSHOT');
@@ -163,7 +196,7 @@ async function refreshControlData(){
   button.disabled=true;
   button.textContent='Refreshing…';
   try{
-    await Promise.all([loadLiveSnapshot(),loadHistory()]);
+    await Promise.all([loadLiveSnapshot(),loadHistory(),loadApprovalRequest()]);
   }finally{
     button.disabled=false;
     button.textContent='Refresh Live Snapshot';
@@ -171,6 +204,7 @@ async function refreshControlData(){
 }
 
 $('#generate').addEventListener('click',()=>{
+  clearApprovalView();
   renderSnapshot(createLocalDemo(),'LOCAL DEMO');
   $('#run').scrollIntoView({behavior:'smooth'});
 });
