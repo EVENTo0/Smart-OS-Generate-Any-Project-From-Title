@@ -1,4 +1,5 @@
 import type { AutonomousExecutionSession } from "../execution/autonomous-execution";
+import type { InfrastructureBlockerKind } from "../execution/infrastructure-blocker";
 import type { PlatformLane } from "../execution/types";
 import type { ArtifactRecord } from "../release/artifact-registry";
 import type { ReleaseCandidateManifest } from "../release/candidate";
@@ -23,13 +24,7 @@ export async function materializeControlRun(input: {
   release: {
     readiness: ReleaseReadiness;
     candidate: ReleaseCandidateManifest;
-    infrastructureBlockers?: { kind: Parameters<typeof createControlRunSnapshot>[0]["release"] extends infer R
-      ? R extends { infrastructureBlockers?: (infer B)[] }
-        ? B extends { kind: infer K }
-          ? K
-          : never
-        : never
-      : never }[];
+    infrastructureBlockers?: { kind: InfrastructureBlockerKind }[];
   };
   maxHistoryEntries?: number;
 }): Promise<MaterializedControlRun> {
