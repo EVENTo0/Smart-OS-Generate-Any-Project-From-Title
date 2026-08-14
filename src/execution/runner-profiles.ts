@@ -17,6 +17,8 @@ export interface RunnerProfileInput {
   cost?: number;
   latency?: number;
   privacy?: number;
+  estimatedCostUnits?: number;
+  estimatedLatencyMs?: number;
 }
 
 export function createRunnerProfile(input: RunnerProfileInput): RunnerCapabilityAdvertisement {
@@ -32,6 +34,12 @@ export function createRunnerProfile(input: RunnerProfileInput): RunnerCapability
   }
   if (input.blocker && input.availability !== "blocked") {
     throw new Error("Infrastructure blocker requires blocked availability");
+  }
+  if (input.estimatedCostUnits !== undefined && (!Number.isFinite(input.estimatedCostUnits) || input.estimatedCostUnits < 0)) {
+    throw new Error("Runner estimatedCostUnits must be a non-negative number");
+  }
+  if (input.estimatedLatencyMs !== undefined && (!Number.isFinite(input.estimatedLatencyMs) || input.estimatedLatencyMs < 0)) {
+    throw new Error("Runner estimatedLatencyMs must be a non-negative number");
   }
 
   return {
@@ -51,5 +59,7 @@ export function createRunnerProfile(input: RunnerProfileInput): RunnerCapability
     cost: input.cost,
     latency: input.latency,
     privacy: input.privacy,
+    estimatedCostUnits: input.estimatedCostUnits,
+    estimatedLatencyMs: input.estimatedLatencyMs,
   };
 }
