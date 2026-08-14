@@ -10,6 +10,8 @@ export interface RunnerRequest {
   requiredTools?: string[];
   preferLocal?: boolean;
   requireWorkspaceOnly?: true;
+  maxEstimatedCostUnits?: number;
+  maxEstimatedLatencyMs?: number;
 }
 
 export interface RunnerCandidateEvaluation {
@@ -29,6 +31,12 @@ export interface RunnerRouteDecision {
 
 const metric = (value: number | undefined, fallback: number) => value ?? fallback;
 
+function validateBudget(value: number | undefined, name: string): void {
+  if (value !== undefined && (!Number.isFinite(value) || value < 0)) {
+    throw new Error(`${name} must be a non-negative number`);
+  }
+}
+
 function evaluateRunner(
   runner: RunnerCapabilityAdvertisement,
   request: RunnerRequest,
@@ -46,6 +54,15 @@ function evaluateRunner(
 
   const missingTools = (request.requiredTools ?? []).filter((tool) => !runner.availableTools.includes(tool));
   for (const tool of missingTools) reasons.push(`missing tool: ${tool}`);
+
+  if (request.maxEstimatedCostUnits !== undefined) {
+    if (runner.estimatedCostUnits === undefined) reasons.push("runner cost estimate missing");
+    else if (runner.estimatedCostUnits > request.maxEstimatedCostUnits) reasons.push("runner exceeds cost budget");
+  }
+  if (request.maxEstimatedLatencyMs !== undefined) {
+    if (runner.estimatedLatencyMs === undefined) reasons.push("runner latency estimate missing");
+    else if (runner.estimatedLatencyMs > request.maxEstimatedLatencyMs) reasons.push("runner exceeds latency budget");
+  }
 
   if (availability !== "available") {
     reasons.push(`runner availability: ${availability}`);
@@ -74,6 +91,9 @@ export function routeExecutionRunner(
   request: RunnerRequest,
   runners: RunnerCapabilityAdvertisement[],
 ): RunnerRouteDecision {
+  validateBudget(request.maxEstimatedCostUnits, "maxEstimatedCostUnits");
+  validateBudget(request.maxEstimatedLatencyMs, "maxEstimatedLatencyMs");
+
   const evaluations = runners
     .map((runner) => evaluateRunner(runner, request))
     .sort((a, b) => b.score - a.score || a.runnerId.localeCompare(b.runnerId));
