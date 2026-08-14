@@ -16,8 +16,8 @@ const runners: RunnerCapabilityAdvertisement[] = [
     allowsPublicPublish: false,
     availability: "available",
     quality: 5,
-    privacy: 3,
-    cost: 4,
+    privacy: 5,
+    cost: 5,
     latency: 5,
   },
   {
