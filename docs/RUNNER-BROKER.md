@@ -36,10 +36,26 @@ The broker can represent GitHub Actions, a local shell host, Codex, Claude Code,
 
 This allows the same build/test intent to move between eligible runners without changing Project DNA, the Build Manifest, or release policy.
 
+## Unified runner evidence
+
+Every authorized runner returns the same evidence contract:
+
+- project and runner identity;
+- run/commit identity;
+- overall conclusion;
+- command results;
+- logs/evidence references;
+- generated artifacts and checksums when available;
+- optional infrastructure blocker.
+
+`src/release/runner-evidence.ts` normalizes this evidence into typed `ExecutionResult[]`, `ArtifactRecord[]`, infrastructure blockers, and evidence references. GitHub Actions, Local, Codex, Claude Code, Antigravity, or future adapters can therefore feed the same Artifact Registry and Release Gate. GitHub is not the sole source of truth.
+
+A runner blocked by infrastructure never assigns a coding fix capability merely because its command did not run. A successful alternate runner may satisfy build/test evidence, but it cannot bypass platform-specific evidence requirements.
+
 ## Example fallback behavior
 
 If GitHub Actions is classified as blocked by billing, a web task may route to an eligible local Codex/Claude Code host or another advertised web runner. An Android task may route only to a runner that actually advertises the requested Android tools. An iOS task remains blocked until an eligible macOS/Xcode runner is available.
 
 ## Release behavior
 
-Runner rerouting does not weaken release gates. Evidence produced by an alternate runner still has to be ingested into the Artifact Registry and pass Release Readiness. Production distribution remains behind explicit human approval.
+Runner rerouting does not weaken release gates. Evidence produced by an alternate runner still has to be ingested into the Artifact Registry and pass Release Readiness. Production distribution, TestFlight, Play Console, signing, and external publication remain behind explicit human approval.
