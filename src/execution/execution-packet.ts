@@ -11,18 +11,27 @@ export interface ExecutionEvidenceContract {
 export interface PortableExecutionPacket {
   schemaVersion: "1";
   projectId: string;
-  sourceCommitSha: string;
+  sourceCommitSha?: string;
+  sourceArtifactDigest?: string;
   handoff: PortableExecutionHandoff;
   evidence: ExecutionEvidenceContract;
 }
 
 export function createExecutionPacket(input: {
   handoff: PortableExecutionHandoff;
-  sourceCommitSha: string;
+  sourceCommitSha?: string;
+  sourceArtifactDigest?: string;
   requiredCommandIds: string[];
   requiredArtifactKinds: ArtifactKind[];
 }): PortableExecutionPacket {
-  if (!input.sourceCommitSha.trim()) throw new Error("sourceCommitSha is required");
+  const sourceCommitSha = input.sourceCommitSha?.trim();
+  const sourceArtifactDigest = input.sourceArtifactDigest?.trim();
+  if (!sourceCommitSha && !sourceArtifactDigest) {
+    throw new Error("sourceCommitSha or sourceArtifactDigest is required");
+  }
+  if (sourceArtifactDigest && !sourceArtifactDigest.startsWith("sha256:")) {
+    throw new Error("sourceArtifactDigest must use sha256 provenance");
+  }
 
   const commandIds = new Set(input.handoff.commands.map((command) => command.id));
   for (const commandId of input.requiredCommandIds) {
@@ -36,7 +45,8 @@ export function createExecutionPacket(input: {
   return {
     schemaVersion: "1",
     projectId: input.handoff.projectId,
-    sourceCommitSha: input.sourceCommitSha,
+    sourceCommitSha,
+    sourceArtifactDigest,
     handoff: input.handoff,
     evidence: {
       requiredCommandIds: [...new Set(input.requiredCommandIds)],
