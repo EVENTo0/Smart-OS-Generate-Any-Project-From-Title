@@ -58,7 +58,7 @@
       <p class="mono" id="approvalFingerprint"></p>
       <p class="muted" id="approvalCapability">Authenticated approval capability has not been verified yet.</p>
       <div id="approvalActions" class="approval-actions hidden"><button id="approveRelease">Approve RC</button><button id="rejectRelease" class="danger">Reject RC</button></div>
-      <p class="muted">Approval is verified by Supabase Auth + a one-time server challenge. This does not authorize TestFlight, Play Console, or production publishing.</p>
+      <p class="muted">Approval controls require both an authenticated Supabase session and a backend-registered scoped request for this exact fingerprint. Approval does not authorize TestFlight, Play Console, or production publishing.</p>
     </div>
   </section>
 </main>
