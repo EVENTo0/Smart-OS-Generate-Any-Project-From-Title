@@ -25,32 +25,17 @@ The broker can represent GitHub Actions, a local shell host, Codex, Claude Code,
 
 ## Portable execution handoff
 
-`PortableExecutionHandoff` transports the same `ExecutionPlan` to an alternate runner. The default handoff:
-
-- is workspace-only;
-- never resolves secrets;
-- never authorizes public publication;
-- requires explicit execution by the selected adapter;
-- rejects commands outside the project workspace;
-- rejects commands that require secrets.
+`PortableExecutionHandoff` transports the same `ExecutionPlan` to an alternate runner. The default handoff is workspace-only, never resolves secrets, never authorizes public publication, requires explicit execution by the selected adapter, rejects commands outside the project workspace, and rejects commands that require secrets.
 
 This allows the same build/test intent to move between eligible runners without changing Project DNA, the Build Manifest, or release policy.
 
 ## Unified runner evidence
 
-Every authorized runner returns the same evidence contract:
+Every authorized runner returns the same evidence contract: project/runner identity, run/commit identity, command results, logs, artifacts/checksums, and an optional infrastructure blocker.
 
-- project and runner identity;
-- run/commit identity;
-- overall conclusion;
-- command results;
-- logs/evidence references;
-- generated artifacts and checksums when available;
-- optional infrastructure blocker.
+`src/release/runner-evidence.ts` normalizes this into typed `ExecutionResult[]`, `ArtifactRecord[]`, infrastructure blockers, and evidence references. GitHub Actions, Local, Codex, Claude Code, Antigravity, or future adapters can therefore feed the same Artifact Registry and Release Gate. GitHub is not the sole source of truth.
 
-`src/release/runner-evidence.ts` normalizes this evidence into typed `ExecutionResult[]`, `ArtifactRecord[]`, infrastructure blockers, and evidence references. GitHub Actions, Local, Codex, Claude Code, Antigravity, or future adapters can therefore feed the same Artifact Registry and Release Gate. GitHub is not the sole source of truth.
-
-A runner blocked by infrastructure never assigns a coding fix capability merely because its command did not run. A successful alternate runner may satisfy build/test evidence, but it cannot bypass platform-specific evidence requirements.
+A runner blocked by infrastructure never assigns a coding fix capability merely because its command did not execute. A successful alternate runner can satisfy technical build/test evidence, but cannot bypass target-platform evidence requirements.
 
 ## Example fallback behavior
 
