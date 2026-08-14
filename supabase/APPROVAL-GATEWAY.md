@@ -39,10 +39,11 @@ This package is for the dedicated SMART OS Supabase project only.
 10. The Edge Function supports current named Supabase key environments (`SUPABASE_PUBLISHABLE_KEYS` / `SUPABASE_SECRET_KEYS`) and retains legacy single-key fallbacks.
 11. The browser exposes Approve/Reject only after a real Supabase session and an authenticated capability check from the Edge Function.
 12. Passwords are sent only through Supabase Auth APIs and are not written by SMART OS to snapshots, artifacts, Git, or custom browser storage.
+13. Approve/Reject additionally require a backend-registered request that matches the exact request ID, fingerprint, assigned approver and validity window.
 
 ## Gate 22 status
 
-Backend deployment is complete. The remaining verification dependency is the first intended approver identity.
+Backend deployment and mobile Auth wiring are complete. The remaining verification dependency is the first intended approver identity.
 
 Completed:
 
@@ -58,7 +59,7 @@ Completed:
 10. Run Performance Advisor and resolve missing FK-index findings.
 11. Wire the mobile PWA to the dedicated project using only its publishable key.
 12. Add Sign up / Sign in / Sign out UI.
-13. Gate Approve/Reject controls behind authenticated capability verification.
+13. Gate Approve/Reject controls behind authenticated capability verification and an exact scoped request.
 
 Remaining end-to-end verification:
 
