@@ -40,6 +40,9 @@ function evaluateRunner(
   if (runner.allowsSecrets) reasons.push("runner allows secrets in this restricted route");
   if (runner.allowsPublicPublish) reasons.push("runner allows public publication in this restricted route");
   if (!supportsLane(runner, request.lane)) reasons.push(`runner does not support lane: ${request.lane}`);
+  if (request.lane === "ios" && runner.hostPlatform.toLowerCase() !== "macos") {
+    reasons.push("iOS execution requires a macOS host");
+  }
 
   const missingTools = (request.requiredTools ?? []).filter((tool) => !runner.availableTools.includes(tool));
   for (const tool of missingTools) reasons.push(`missing tool: ${tool}`);
