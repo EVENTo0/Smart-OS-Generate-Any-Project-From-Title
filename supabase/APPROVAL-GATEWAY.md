@@ -39,7 +39,9 @@ This package is for the dedicated SMART OS Supabase project only.
 11. The browser exposes Approve/Reject only after a real Supabase session and an authenticated capability check from the Edge Function.
 12. Passwords are sent only through Supabase Auth APIs and are not written by SMART OS to snapshots, artifacts, Git, or custom browser storage.
 
-## Verification sequence
+## Gate 22 status
+
+Backend deployment is complete. The remaining verification dependency is the first intended approver identity.
 
 Completed:
 
@@ -48,11 +50,14 @@ Completed:
 3. Verify tables/RLS/grants.
 4. Apply hardening migration for explicit challenge deny + FK indexes.
 5. Deploy `smart-os-approval` with `verify_jwt=true`.
-6. Run Security Advisor and resolve findings.
-7. Run Performance Advisor and resolve missing FK-index findings.
-8. Wire the mobile PWA to the dedicated project using only its publishable key.
-9. Add Sign up / Sign in / Sign out UI.
-10. Gate Approve/Reject controls behind authenticated capability verification.
+6. Re-check current Supabase Auth/Edge authorization guidance.
+7. Update the Edge Function for current named publishable/secret key environments.
+8. Redeploy Edge Function version 2.
+9. Run Security Advisor and resolve findings.
+10. Run Performance Advisor and resolve missing FK-index findings.
+11. Wire the mobile PWA to the dedicated project using only its publishable key.
+12. Add Sign up / Sign in / Sign out UI.
+13. Gate Approve/Reject controls behind authenticated capability verification.
 
 Remaining end-to-end verification:
 
