@@ -2,7 +2,7 @@
 
 ## Status
 
-Code-complete on isolated branch `infra-blocker-classifier`. Full repository CI validation is externally blocked by the GitHub account billing/spending-limit state.
+Code-complete on isolated branch `infra-blocker-classifier`. Full GitHub Actions validation is externally blocked by the account billing/spending-limit state.
 
 ## Implemented
 
@@ -18,27 +18,33 @@ Code-complete on isolated branch `infra-blocker-classifier`. Full repository CI 
 - runner artifacts → `ArtifactRecord[]`
 - infrastructure blockers remain outside coding remediation
 - Release Gate can remain blocked by infrastructure without classifying the project as a code regression
+- provenance accepts either Git commit identity or a SHA-256 source-artifact digest
 
-## Verification available now
+## Verified alternate-runner proof
 
-Static branch comparison shows Gate 17 is isolated from `foundation-v0.1` and contains only the runner/failure/evidence additions plus focused tests/docs.
+A real generated Snake Web artifact was executed outside GitHub Actions in an isolated local runner. `node --check src/main.js` exited 0 and checksums were recorded in `examples/snake-game/local-runner-evidence.json`.
 
-Focused tests exist for:
-- GitHub billing → alternate runner fallback
-- iOS host restriction
-- portable workspace handoff
-- infrastructure rerouting
-- successful alternate-runner evidence ingestion
-- blocked runner evidence without coding fix assignment
-- RC blocked by infrastructure without a code regression
+The committed evidence contract was then exercised locally through the actual release primitives:
 
-## Validation still required
+`Runner Evidence → ArtifactRegistry → ReleaseReadiness → ReleaseCandidateManifest`
 
-When an authorized runner is available:
+Observed result:
+
+- evidence verified: `true`
+- build artifact present: `true`
+- test-report artifact present: `true`
+- release-readiness score: `100`
+- technical candidate readiness: `true`
+- candidate without human approval: `blocked`
+- only blocker without approval: `explicit human approval required`
+- candidate with explicit human approval: `ready`
+
+This local behavioral verification does not replace the full repository CI suite. It proves that the alternate-runner evidence contract and release gate integrate correctly while GitHub Actions is unavailable.
+
+## Remaining validation
+
+When GitHub Actions or another complete authorized repository runner is available:
+
 1. run the full repository test suite;
-2. execute the Snake web build through an alternate runner;
-3. ingest its evidence through `runner-evidence.ts`;
-4. confirm Artifact Registry + Release Gate behavior;
-5. keep signing/TestFlight/Play/production behind explicit human approval.
-
-Do not open a new PR solely to run CI while the GitHub Actions account is blocked.
+2. repeat the alternate-runner proof through the normal repository test harness;
+3. keep signing/TestFlight/Play/production behind explicit human approval.
