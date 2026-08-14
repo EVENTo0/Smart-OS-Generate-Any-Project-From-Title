@@ -20,6 +20,17 @@ Dedicated backend: `Smart OS` (`vzfltlqmkvrlhuppeqmy`).
 - First real approver Auth user exists and is email-confirmed.
 - First real scoped Snake Web approval request has been issued against the exact release-candidate fingerprint and local-runner evidence.
 
+## First real approval request
+
+- project: `snake-game`
+- request id: `e6a393e6-d41d-427f-be25-c5d002cec6ba`
+- exact fingerprint: `sha256:71eee6b733b138924ee177439869e6dcbf4042dd557cf6557cbb7d43ba13eb93`
+- target lane: `web`
+- artifacts: local runner build + test report
+- evidence: `runner/local-chatgpt-container/run/local-web-001`
+- status at issuance: `pending`
+- publication authorization: not included
+
 ## Security model
 
 1. The browser signs in with Supabase Auth and sends its user JWT in `Authorization`.
