@@ -8,6 +8,7 @@ This package is for the dedicated SMART OS Supabase project only.
 - Project ref: `vzfltlqmkvrlhuppeqmy`
 - Region: `ap-northeast-2`
 - Status verified during Gate 22: `ACTIVE_HEALTHY`
+- Project lookup initially did not appear in account listing, but direct lookup by the user-provided project ref succeeded and was used for all subsequent writes.
 - Applied migrations:
   - `smart_os_approval_gateway`
   - `smart_os_approval_gateway_hardening`
