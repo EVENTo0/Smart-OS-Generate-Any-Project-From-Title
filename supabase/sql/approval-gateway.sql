@@ -21,6 +21,10 @@ create table if not exists public.smart_os_approval_requests (
 create index if not exists smart_os_approval_requests_approver_status_idx
   on public.smart_os_approval_requests (approver_user_id, status, expires_at);
 
+create index if not exists smart_os_approval_requests_decided_by_idx
+  on public.smart_os_approval_requests (decided_by)
+  where decided_by is not null;
+
 create table if not exists public.smart_os_approval_challenges (
   challenge_id uuid primary key,
   request_id uuid not null references public.smart_os_approval_requests(request_id) on delete cascade,
@@ -34,6 +38,12 @@ create table if not exists public.smart_os_approval_challenges (
 
 create index if not exists smart_os_approval_challenges_lookup_idx
   on public.smart_os_approval_challenges (challenge_id, request_id, approver_user_id, expires_at);
+
+create index if not exists smart_os_approval_challenges_request_id_idx
+  on public.smart_os_approval_challenges (request_id);
+
+create index if not exists smart_os_approval_challenges_approver_user_id_idx
+  on public.smart_os_approval_challenges (approver_user_id);
 
 alter table public.smart_os_approval_requests enable row level security;
 alter table public.smart_os_approval_challenges enable row level security;
@@ -51,6 +61,13 @@ create policy "smart_os_approver_reads_own_requests"
   for select
   to authenticated
   using ((select auth.uid()) = approver_user_id);
+
+drop policy if exists "smart_os_no_direct_challenge_access" on public.smart_os_approval_challenges;
+create policy "smart_os_no_direct_challenge_access"
+  on public.smart_os_approval_challenges
+  for select
+  to authenticated
+  using (false);
 
 comment on table public.smart_os_approval_requests is
   'SMART OS release approval requests. Browser users may only read requests assigned to their own auth.uid().';
