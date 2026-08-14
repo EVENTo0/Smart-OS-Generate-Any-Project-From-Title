@@ -34,9 +34,21 @@ test("execution packet preserves restricted policy and evidence requirements", (
   });
 
   assert.equal(packet.projectId, "snake-game");
+  assert.equal(packet.sourceCommitSha, "abc123");
   assert.equal(packet.handoff.policy.resolveSecrets, false);
   assert.equal(packet.handoff.policy.allowPublicPublish, false);
   assert.deepEqual(packet.evidence.requiredCommandIds, ["web-build"]);
+});
+
+test("execution packet accepts sha256 artifact provenance", () => {
+  const packet = createExecutionPacket({
+    handoff,
+    sourceArtifactDigest: "sha256:71e2b2db526ad8fa1fb83ebf981729d94d18cde26cfb0139449958235800a123",
+    requiredCommandIds: ["web-build"],
+    requiredArtifactKinds: ["build"],
+  });
+  assert.equal(packet.sourceCommitSha, undefined);
+  assert.match(packet.sourceArtifactDigest ?? "", /^sha256:/);
 });
 
 test("execution packet rejects unknown required command", () => {
