@@ -22,6 +22,8 @@ export interface RunnerCapabilityAdvertisement {
   cost?: number;
   latency?: number;
   privacy?: number;
+  estimatedCostUnits?: number;
+  estimatedLatencyMs?: number;
 }
 
 export function supportsNativePlatform(advertisement: RunnerCapabilityAdvertisement, platform: NativePlatform): boolean {
