@@ -1,8 +1,18 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.111.0";
+import { SMART_OS_SUPABASE_URL, SMART_OS_SUPABASE_PUBLISHABLE_KEY } from "./supabase-config.js";
+
+const supabase=createClient(SMART_OS_SUPABASE_URL,SMART_OS_SUPABASE_PUBLISHABLE_KEY,{
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true},
+});
+const APPROVAL_ENDPOINT=`${SMART_OS_SUPABASE_URL}/functions/v1/smart-os-approval`;
+
 const platformButtons=[...document.querySelectorAll('.chip')];
 platformButtons.forEach(button=>button.addEventListener('click',()=>{button.dataset.on=button.dataset.on==='true'?'false':'true'}));
 
 const $=selector=>document.querySelector(selector);
 const SAFE_HISTORY_PATH=/^history\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+\.json$/;
+let currentApprovalView=null;
+let approvalCapability=false;
 
 function statusStep(label,value){
   const row=document.createElement('div');
@@ -47,19 +57,29 @@ function isSafeApprovalView(view){
     && view.containsOpaqueProof===false;
 }
 
+function updateApprovalActionVisibility(){
+  const visible=Boolean(currentApprovalView&&approvalCapability);
+  $('#approvalActions').classList.toggle('hidden',!visible);
+}
+
 function renderApprovalView(view){
   if(!isSafeApprovalView(view))throw new Error('invalid or unsafe approval view');
+  currentApprovalView=view;
   $('#approvalRequestStatus').textContent='PENDING';
+  $('#approvalRequestStatus').classList.remove('good');
   $('#approvalRequestStatus').classList.add('warn');
   $('#approvalRequestMeta').textContent=`${view.requestId} · ${(view.targetLanes||[]).join(', ')||'no targets'} · ${view.artifactCount||0} artifact(s) · expires ${view.expiresAt}`;
   $('#approvalFingerprint').textContent=view.candidateFingerprint;
+  updateApprovalActionVisibility();
 }
 
 function clearApprovalView(){
+  currentApprovalView=null;
   $('#approvalRequestStatus').textContent='NONE';
   $('#approvalRequestStatus').classList.remove('warn','good');
   $('#approvalRequestMeta').textContent='No verified approval request has been materialized.';
   $('#approvalFingerprint').textContent='';
+  updateApprovalActionVisibility();
 }
 
 function renderSnapshot(snapshot,dataMode){
@@ -191,12 +211,120 @@ async function loadLiveSnapshot(){
   }
 }
 
+async function gatewayFetch(method,body){
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session)throw new Error('sign in required');
+  const response=await fetch(APPROVAL_ENDPOINT,{
+    method,
+    headers:{
+      'Content-Type':'application/json',
+      'apikey':SMART_OS_SUPABASE_PUBLISHABLE_KEY,
+      'Authorization':`Bearer ${session.access_token}`,
+    },
+    body:body?JSON.stringify(body):undefined,
+  });
+  const payload=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(payload.error||`approval gateway error ${response.status}`);
+  return payload;
+}
+
+async function verifyApprovalCapability(){
+  approvalCapability=false;
+  $('#approvalCapability').textContent='Authenticated approval capability unavailable until sign-in.';
+  try{
+    const capability=await gatewayFetch('GET');
+    approvalCapability=capability.authenticatedApproval===true&&capability.publicPublishAllowed===false;
+    $('#approvalCapability').textContent=approvalCapability
+      ?'Authenticated one-time approval gateway verified. Public publishing remains separately locked.'
+      :'Approval gateway did not advertise the required safe capability.';
+  }catch(error){
+    $('#approvalCapability').textContent=error instanceof Error?error.message:'Approval gateway unavailable.';
+  }
+  updateApprovalActionVisibility();
+}
+
+async function refreshAuthUi(){
+  const {data:{session}}=await supabase.auth.getSession();
+  const signedIn=Boolean(session?.user);
+  $('#authStatus').textContent=signedIn?'SIGNED IN':'SIGNED OUT';
+  $('#authStatus').classList.toggle('good',signedIn);
+  $('#authForm').classList.toggle('hidden',signedIn);
+  $('#signOut').classList.toggle('hidden',!signedIn);
+  $('#authMessage').textContent=signedIn
+    ?`Authenticated as ${session.user.email||session.user.id}. Approval still requires an exact scoped request.`
+    :'Sign in to the isolated SMART OS Supabase project before approving a release candidate.';
+  if(signedIn)await verifyApprovalCapability();
+  else{
+    approvalCapability=false;
+    $('#approvalCapability').textContent='Authenticated approval capability unavailable until sign-in.';
+    updateApprovalActionVisibility();
+  }
+}
+
+async function signIn(){
+  const email=$('#authEmail').value.trim();
+  const password=$('#authPassword').value;
+  if(!email||password.length<8){$('#authMessage').textContent='Enter a valid email and a password of at least 8 characters.';return;}
+  $('#authMessage').textContent='Signing in…';
+  const {error}=await supabase.auth.signInWithPassword({email,password});
+  if(error){$('#authMessage').textContent=error.message;return;}
+  $('#authPassword').value='';
+  await refreshAuthUi();
+}
+
+async function signUp(){
+  const email=$('#authEmail').value.trim();
+  const password=$('#authPassword').value;
+  if(!email||password.length<8){$('#authMessage').textContent='Enter a valid email and a password of at least 8 characters.';return;}
+  $('#authMessage').textContent='Creating account…';
+  const {data,error}=await supabase.auth.signUp({email,password});
+  if(error){$('#authMessage').textContent=error.message;return;}
+  $('#authPassword').value='';
+  if(data.session)await refreshAuthUi();
+  else $('#authMessage').textContent='Account created. Complete email confirmation if Supabase requires it, then sign in.';
+}
+
+async function submitApprovalDecision(decision){
+  if(!currentApprovalView||!approvalCapability)return;
+  const approveButton=$('#approveRelease');
+  const rejectButton=$('#rejectRelease');
+  approveButton.disabled=true;
+  rejectButton.disabled=true;
+  $('#approvalRequestStatus').textContent='VERIFYING';
+  try{
+    const challenge=await gatewayFetch('POST',{
+      action:'challenge',
+      requestId:currentApprovalView.requestId,
+      fingerprint:currentApprovalView.candidateFingerprint,
+    });
+    const result=await gatewayFetch('POST',{
+      action:'decide',
+      requestId:currentApprovalView.requestId,
+      fingerprint:currentApprovalView.candidateFingerprint,
+      challengeId:challenge.challengeId,
+      decision,
+    });
+    const approved=result.decision==='approve'&&result.publicPublishAuthorized===false;
+    $('#approvalRequestStatus').textContent=approved?'APPROVED':'REJECTED';
+    $('#approvalRequestStatus').classList.toggle('good',approved);
+    $('#approvalRequestStatus').classList.toggle('warn',!approved);
+    $('#approvalRequestMeta').textContent=`Verified by ${result.verifierId} at ${result.decidedAt}. Public publish authorization: false.`;
+    $('#approvalActions').classList.add('hidden');
+  }catch(error){
+    $('#approvalRequestStatus').textContent='FAILED';
+    $('#approvalRequestStatus').classList.add('warn');
+    $('#approvalRequestMeta').textContent=error instanceof Error?error.message:'Approval failed.';
+    approveButton.disabled=false;
+    rejectButton.disabled=false;
+  }
+}
+
 async function refreshControlData(){
   const button=$('#refresh');
   button.disabled=true;
   button.textContent='Refreshing…';
   try{
-    await Promise.all([loadLiveSnapshot(),loadHistory(),loadApprovalRequest()]);
+    await Promise.all([loadLiveSnapshot(),loadHistory(),loadApprovalRequest(),refreshAuthUi()]);
   }finally{
     button.disabled=false;
     button.textContent='Refresh Live Snapshot';
@@ -208,6 +336,11 @@ $('#generate').addEventListener('click',()=>{
   renderSnapshot(createLocalDemo(),'LOCAL DEMO');
   $('#run').scrollIntoView({behavior:'smooth'});
 });
-
 $('#refresh').addEventListener('click',refreshControlData);
+$('#signIn').addEventListener('click',signIn);
+$('#signUp').addEventListener('click',signUp);
+$('#signOut').addEventListener('click',async()=>{await supabase.auth.signOut();await refreshAuthUi();});
+$('#approveRelease').addEventListener('click',()=>submitApprovalDecision('approve'));
+$('#rejectRelease').addEventListener('click',()=>submitApprovalDecision('reject'));
+supabase.auth.onAuthStateChange(()=>{queueMicrotask(refreshAuthUi);});
 refreshControlData();
