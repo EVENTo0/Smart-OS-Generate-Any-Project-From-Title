@@ -18,6 +18,8 @@ const env = (name: string) => {
   return value;
 };
 
+// Current Supabase projects expose named publishable/secret key sets. Legacy
+// single-key env vars remain as compatibility fallbacks for older/local setups.
 const namedKey = (setName: "SUPABASE_PUBLISHABLE_KEYS" | "SUPABASE_SECRET_KEYS") => {
   const raw = Deno.env.get(setName);
   if (!raw) return "";
