@@ -22,6 +22,7 @@ This package is for the dedicated SMART OS Supabase project only.
 - `sql/approval-gateway.sql` — approval request/challenge tables, RLS, grants, explicit deny policy and FK-supporting indexes.
 - `functions/smart-os-approval/index.ts` — authenticated Edge Function for capability, challenge and approve/reject decisions.
 - `../control-app/supabase-config.js` — public-only browser configuration (project URL + publishable key); no secret/service key.
+- `../control-app/index.html` + `app.js` — phone Auth UI and authenticated approval controls.
 
 ## Security model
 
@@ -35,6 +36,8 @@ This package is for the dedicated SMART OS Supabase project only.
 8. Approval authorizes the exact fingerprint only. It does not authorize TestFlight, Play Console or production publication.
 9. No Supabase secret/service key belongs in `control-app`, snapshots, artifacts or Git.
 10. The Edge Function supports current named Supabase key environments (`SUPABASE_PUBLISHABLE_KEYS` / `SUPABASE_SECRET_KEYS`) and retains legacy single-key fallbacks.
+11. The browser exposes Approve/Reject only after a real Supabase session and an authenticated capability check from the Edge Function.
+12. Passwords are sent only through Supabase Auth APIs and are not written by SMART OS to snapshots, artifacts, Git, or custom browser storage.
 
 ## Verification sequence
 
@@ -48,7 +51,8 @@ Completed:
 6. Run Security Advisor and resolve findings.
 7. Run Performance Advisor and resolve missing FK-index findings.
 8. Wire the mobile PWA to the dedicated project using only its publishable key.
-9. Add Sign up / Sign in / Sign out UI and expose Approve/Reject only after authenticated capability verification.
+9. Add Sign up / Sign in / Sign out UI.
+10. Gate Approve/Reject controls behind authenticated capability verification.
 
 Remaining end-to-end verification:
 
