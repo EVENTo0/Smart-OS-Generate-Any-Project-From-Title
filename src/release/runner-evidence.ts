@@ -33,6 +33,10 @@ export interface RunnerEvidenceSnapshot {
 }
 
 export interface RunnerReleaseEvidence {
+  projectId: string;
+  runnerId: string;
+  runId: string;
+  commitSha: string;
   verified: boolean;
   blockers: string[];
   executionResults: ExecutionResult[];
@@ -78,10 +82,15 @@ export function ingestRunnerEvidence(snapshot: RunnerEvidenceSnapshot): RunnerRe
       commitSha: snapshot.commitSha,
       artifactName: artifact.name,
       runnerKind: snapshot.runnerKind,
+      runId: snapshot.runId,
     },
   }));
 
   return {
+    projectId: snapshot.projectId,
+    runnerId: snapshot.runnerId,
+    runId: snapshot.runId,
+    commitSha: snapshot.commitSha,
     verified: blockers.length === 0 && infrastructureBlockers.length === 0,
     blockers,
     executionResults,
