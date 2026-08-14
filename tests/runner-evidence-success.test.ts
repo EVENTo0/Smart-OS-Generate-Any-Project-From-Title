@@ -23,6 +23,9 @@ test("alternate runner evidence maps into release evidence", () => {
   });
 
   assert.equal(evidence.verified, true);
+  assert.equal(evidence.projectId, "snake-game");
+  assert.equal(evidence.runnerId, "local-codex");
+  assert.equal(evidence.commitSha, "abc");
   assert.equal(evidence.executionResults.every((result) => result.status === "passed"), true);
   assert.deepEqual(evidence.artifactRecords.map((artifact) => artifact.kind).sort(), ["build", "test-report"]);
   assert.deepEqual(evidence.infrastructureBlockers, []);
