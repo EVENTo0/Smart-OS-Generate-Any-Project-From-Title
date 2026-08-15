@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1",
+  "projectId": "snake-game",
+  "version": "0.1.0-rc.2",
+  "releaseCandidateId": "2fe3775d-f2c4-43c7-8611-0995df7b90b0",
+  "candidateFingerprint": "sha256:82944e75cf40c7ff3276d9c72581cc5ef117e414614db2bfcf1a840bbf1adec0",
+  "approvalRequestId": "9eb1dedf-a473-42da-9b7d-6a1ac41f9fc4",
+  "verifierId": "supabase-auth-edge",
+  "targetLanes": ["android", "ios"],
+  "artifactIds": [
+    "github-artifact-9195435022",
+    "github-artifact-9195577810",
+    "github-artifact-9195587610",
+    "github-artifact-9195590063"
+  ],
+  "evidenceRefs": [
+    "git:blob:src/implementation/generator.ts:1e471fcaf4aa1006cc51d7eeda842d3ef50e189e",
+    "github-actions:run:31736312519",
+    "github-actions:run:31736453074",
+    "github-actions:run:31736849918"
+  ],
+  "status": "promoted",
+  "publicPublishAuthorized": false
+}
