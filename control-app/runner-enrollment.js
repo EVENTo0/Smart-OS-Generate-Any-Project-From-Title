@@ -17,6 +17,13 @@ function setStatus(message, good = false) {
   statusEl.className = `status ${good ? 'good' : 'warn'}`;
 }
 
+function fullToolchainReady(item) {
+  const tools = new Set(Array.isArray(item.tools) ? item.tools : []);
+  if (item.lane === 'android') return (tools.has('gradle') || tools.has('./gradlew')) && tools.has('jarsigner');
+  if (item.lane === 'ios') return item.host_platform === 'macos' && tools.has('xcodebuild') && tools.has('security');
+  return false;
+}
+
 async function session() {
   const { data } = await supabase.auth.getSession();
   return data.session;
@@ -96,9 +103,11 @@ async function refreshStatus() {
     listEl.innerHTML = attestations.map((item) => {
       const heartbeat = item.last_heartbeat_at ? new Date(item.last_heartbeat_at).toLocaleString() : 'none';
       const blocker = item.blocker_category ? ` · blocker ${item.blocker_category}` : '';
-      return `<div class="attempt"><strong>${item.runner_id}</strong> · ${item.lane} · ${item.state}${blocker}<br><span class="muted">${item.host_platform} · heartbeat ${heartbeat}</span></div>`;
+      const toolchain = fullToolchainReady(item) ? 'full signing toolchain' : 'toolchain incomplete';
+      return `<div class="attempt"><strong>${item.runner_id}</strong> · ${item.lane} · ${item.state}${blocker}<br><span class="muted">${item.host_platform} · ${toolchain} · heartbeat ${heartbeat}</span></div>`;
     }).join('');
-    setStatus(attestations.some((item) => item.state === 'available') ? 'RUNNER AVAILABLE' : 'RUNNER REGISTERED', true);
+    const usable = attestations.some((item) => item.state === 'available' && fullToolchainReady(item));
+    setStatus(usable ? 'RUNNER AVAILABLE' : 'RUNNER REGISTERED', usable);
   } catch (error) {
     if (listEl) listEl.textContent = error instanceof Error ? error.message : 'Runner status unavailable.';
     setStatus('SIGN IN REQUIRED');
