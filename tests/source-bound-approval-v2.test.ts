@@ -25,27 +25,23 @@ const candidate: ReleaseCandidateManifest = {
   approvedByHuman: false,
 };
 
-const sourceManifest: ReleaseSourceManifest = {
-  schemaVersion: "1",
-  lanes: [
-    {
-      lane: "android",
-      sourceKind: "git-object",
-      sourceCommitSha: "569cf6a3fea828b8688856ad3f6890c35e065c86",
-      sourceObjectPath: "src/implementation/generator.ts",
-      sourceObjectSha: "1e471fcaf4aa1006cc51d7eeda842d3ef50e189e",
-      materializerId: "snake-capacitor-v1",
-    },
-    {
-      lane: "ios",
-      sourceKind: "git-object",
-      sourceCommitSha: "45735ce8dd3383a69a05524d7f46a7adb66cd116",
-      sourceObjectPath: "src/implementation/generator.ts",
-      sourceObjectSha: "1e471fcaf4aa1006cc51d7eeda842d3ef50e189e",
-      materializerId: "snake-capacitor-v1",
-    },
-  ],
+const androidBinding = {
+  lane: "android" as const,
+  sourceKind: "git-object" as const,
+  sourceCommitSha: "569cf6a3fea828b8688856ad3f6890c35e065c86",
+  sourceObjectPath: "src/implementation/generator.ts",
+  sourceObjectSha: "1e471fcaf4aa1006cc51d7eeda842d3ef50e189e",
+  materializerId: "snake-capacitor-v1",
 };
+const iosBinding = {
+  lane: "ios" as const,
+  sourceKind: "git-object" as const,
+  sourceCommitSha: "45735ce8dd3383a69a05524d7f46a7adb66cd116",
+  sourceObjectPath: "src/implementation/generator.ts",
+  sourceObjectSha: "1e471fcaf4aa1006cc51d7eeda842d3ef50e189e",
+  materializerId: "snake-capacitor-v1",
+};
+const sourceManifest: ReleaseSourceManifest = { schemaVersion: "1", lanes: [androidBinding, iosBinding] };
 
 const verifier: ApprovalVerifier = {
   async verify(_request, attestation) {
@@ -62,7 +58,6 @@ test("legacy v1 fingerprint remains byte-for-byte compatible when no source mani
     evidenceRefs: ["runner/local-codex/run/1"],
   });
   assert.equal(fingerprint, "sha256:1dcb981e506e3bf743f59cefae585260a972e24dda5459d795b19bb50268561b");
-
   const request = createReleaseApprovalRequest({
     requestId: "legacy-approval-001",
     projectId: "snake-game",
@@ -92,12 +87,9 @@ test("source-bound approval is schema v2 and source changes alter the candidate 
   });
   assert.equal(request.schemaVersion, "2");
   assert.match(request.sourceManifestDigest ?? "", /^sha256:[0-9a-f]{64}$/);
-
   const changed: ReleaseSourceManifest = {
     ...sourceManifest,
-    lanes: sourceManifest.lanes.map((lane) => lane.lane === "android"
-      ? { ...lane, sourceObjectSha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
-      : lane),
+    lanes: sourceManifest.lanes.map((lane) => lane.lane === "android" ? { ...lane, sourceObjectSha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } : lane),
   };
   const changedDigest = releaseSourceManifestDigest({ manifest: changed, targetLanes: ["android", "ios"] });
   const changedFingerprint = releaseCandidateFingerprint({
@@ -113,12 +105,11 @@ test("source-bound approval is schema v2 and source changes alter the candidate 
 test("source manifest must bind each target lane exactly once", () => {
   assert.throws(() => releaseSourceManifestDigest({
     targetLanes: ["android", "ios"],
-    manifest: { schemaVersion: "1", lanes: [sourceManifest.lanes[0]] },
+    manifest: { schemaVersion: "1", lanes: [androidBinding] },
   }), /every approval target lane exactly once/);
-
   assert.throws(() => releaseSourceManifestDigest({
     targetLanes: ["android"],
-    manifest: { schemaVersion: "1", lanes: [sourceManifest.lanes[0], sourceManifest.lanes[0]] },
+    manifest: { schemaVersion: "1", lanes: [androidBinding, androidBinding] },
   }), /Duplicate source manifest lane/);
 });
 
@@ -134,7 +125,6 @@ test("v2 verification rejects a missing source manifest digest before verifier a
     requestedAt: "2026-08-15T06:00:00.000Z",
     expiresAt: "2026-08-15T07:00:00.000Z",
   });
-
   await assert.rejects(
     verifyReleaseApprovalDecision({
       request: { ...request, sourceManifestDigest: undefined },
