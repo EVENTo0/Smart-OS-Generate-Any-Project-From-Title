@@ -19,9 +19,11 @@ esac
 
 TOOLS=()
 command -v xcodebuild >/dev/null 2>&1 && TOOLS+=("xcodebuild")
+command -v security >/dev/null 2>&1 && TOOLS+=("security")
 command -v gradle >/dev/null 2>&1 && TOOLS+=("gradle")
 [[ -x ./gradlew ]] && TOOLS+=("./gradlew")
 command -v java >/dev/null 2>&1 && TOOLS+=("java")
+command -v jarsigner >/dev/null 2>&1 && TOOLS+=("jarsigner")
 
 SECRET_REFS=()
 for name in \
