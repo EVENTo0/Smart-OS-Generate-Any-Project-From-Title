@@ -3,7 +3,21 @@ set -euo pipefail
 set +x
 
 WORKSPACE="${1:?iOS workspace path required}"
-[[ "$WORKSPACE" =~ ^workspaces/[A-Za-z0-9._:-]+/build/ios$ ]] || { echo "Unsafe iOS workspace path" >&2; exit 2; }
+STATE_DIR="${SMART_OS_STATE_DIR:-$HOME/.smart-os}"
+WORKSPACE="$(python3 - "$WORKSPACE" <<'PY'
+import os,sys
+print(os.path.realpath(sys.argv[1]))
+PY
+)"
+STATE_DIR="$(python3 - "$STATE_DIR" <<'PY'
+import os,sys
+print(os.path.realpath(sys.argv[1]))
+PY
+)"
+case "$WORKSPACE" in
+  "$STATE_DIR"/signing-worktrees/*/source/.smartos-native/snake-capacitor-ios/ios) ;;
+  *) echo "Unsafe iOS source-bound workspace path" >&2; exit 2 ;;
+esac
 [[ -d "$WORKSPACE" ]] || { echo "iOS workspace does not exist" >&2; exit 2; }
 [[ "$(uname -s)" == "Darwin" ]] || { echo "iOS signing requires macOS" >&2; exit 2; }
 
@@ -82,7 +96,7 @@ xcodebuild \
   CODE_SIGN_IDENTITY="$IDENTITY" \
   PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
   OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN" \
-  archive
+  archive >/dev/null
 popd >/dev/null
 
 [[ -d "$ARCHIVE_PATH" ]] || { echo "Signed Xcode archive was not produced" >&2; exit 3; }
