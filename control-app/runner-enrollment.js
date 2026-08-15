@@ -51,7 +51,7 @@ function renderPairing(payload) {
     'On the target runner, from this repository:',
     `export SMART_OS_ENROLLMENT_ID='${payload.enrollmentId}'`,
     `export SMART_OS_PAIRING_TOKEN='${payload.pairingToken}'`,
-    './scripts/signing/enroll-runner.sh',
+    'bash ./scripts/signing/enroll-runner.sh',
     '',
     'The pairing token is not a signing secret and is not stored by this page.',
   ].join('\n');
