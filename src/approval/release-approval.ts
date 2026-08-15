@@ -4,8 +4,22 @@ import type { ArtifactRecord } from "../release/artifact-registry";
 import type { ReleaseCandidateManifest } from "../release/candidate";
 import type { ReleaseReadiness } from "../release/readiness";
 
-export interface ReleaseApprovalRequest {
+export interface ReleaseSourceLaneBinding {
+  lane: PlatformLane;
+  sourceKind: "git-object";
+  sourceCommitSha: string;
+  sourceObjectPath: string;
+  sourceObjectSha: string;
+  materializerId: string;
+}
+
+export interface ReleaseSourceManifest {
   schemaVersion: "1";
+  lanes: ReleaseSourceLaneBinding[];
+}
+
+export interface ReleaseApprovalRequest {
+  schemaVersion: "1" | "2";
   requestId: string;
   projectId: string;
   purpose: "release-candidate";
@@ -13,6 +27,7 @@ export interface ReleaseApprovalRequest {
   targetLanes: PlatformLane[];
   artifactIds: string[];
   evidenceRefs: string[];
+  sourceManifestDigest?: string;
   requestedAt: string;
   expiresAt: string;
 }
@@ -60,6 +75,18 @@ function safeId(value: string, label: string): string {
   return value;
 }
 
+function safeGitSha(value: string, label: string): string {
+  if (!/^[a-f0-9]{40}$/i.test(value)) throw new Error(`Invalid ${label}`);
+  return value.toLowerCase();
+}
+
+function safeRelativePath(value: string): string {
+  if (!value || value.startsWith("/") || value.includes("\\") || value.split("/").some((part) => part === ".." || part === "")) {
+    throw new Error("Unsafe source object path");
+  }
+  return value;
+}
+
 function stableArtifactBinding(artifacts: ArtifactRecord[]): Array<{
   id: string;
   kind: ArtifactRecord["kind"];
@@ -81,19 +108,59 @@ function stableArtifactBinding(artifacts: ArtifactRecord[]): Array<{
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
+function canonicalSourceManifest(
+  manifest: ReleaseSourceManifest,
+  targetLanes: PlatformLane[],
+): ReleaseSourceManifest {
+  if (manifest.schemaVersion !== "1") throw new Error("Unsupported source manifest schema");
+  const expected = [...new Set(targetLanes)].sort();
+  const seen = new Set<string>();
+  const lanes = manifest.lanes.map((binding) => {
+    if (seen.has(binding.lane)) throw new Error(`Duplicate source manifest lane: ${binding.lane}`);
+    seen.add(binding.lane);
+    if (!expected.includes(binding.lane)) throw new Error(`Source manifest lane ${binding.lane} is outside approval scope`);
+    return {
+      lane: binding.lane,
+      sourceKind: "git-object" as const,
+      sourceCommitSha: safeGitSha(binding.sourceCommitSha, "source commit SHA"),
+      sourceObjectPath: safeRelativePath(binding.sourceObjectPath),
+      sourceObjectSha: safeGitSha(binding.sourceObjectSha, "source object SHA"),
+      materializerId: safeId(binding.materializerId, "source materializer id"),
+    };
+  }).sort((a, b) => a.lane.localeCompare(b.lane));
+  const actual = lanes.map((binding) => binding.lane).sort();
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error("Source manifest must bind every approval target lane exactly once");
+  }
+  return { schemaVersion: "1", lanes };
+}
+
+export function releaseSourceManifestDigest(input: {
+  manifest: ReleaseSourceManifest;
+  targetLanes: PlatformLane[];
+}): string {
+  const canonical = canonicalSourceManifest(input.manifest, input.targetLanes);
+  return `sha256:${createHash("sha256").update(JSON.stringify(canonical)).digest("hex")}`;
+}
+
 export function releaseCandidateFingerprint(input: {
   projectId: string;
   targetLanes: PlatformLane[];
   artifacts: ArtifactRecord[];
   evidenceRefs: string[];
+  sourceManifestDigest?: string;
 }): string {
   if (!input.targetLanes.length) throw new Error("Approval target lanes are required");
   if (!input.evidenceRefs.length) throw new Error("Approval evidence references are required");
+  if (input.sourceManifestDigest && !/^sha256:[a-f0-9]{64}$/i.test(input.sourceManifestDigest)) {
+    throw new Error("Invalid source manifest digest");
+  }
   const canonical = JSON.stringify({
     projectId: input.projectId,
     targetLanes: [...new Set(input.targetLanes)].sort(),
     artifacts: stableArtifactBinding(input.artifacts),
     evidenceRefs: [...new Set(input.evidenceRefs)].sort(),
+    ...(input.sourceManifestDigest ? { sourceManifestDigest: input.sourceManifestDigest.toLowerCase() } : {}),
   });
   return `sha256:${createHash("sha256").update(canonical).digest("hex")}`;
 }
@@ -105,6 +172,7 @@ export function createReleaseApprovalRequest(input: {
   artifacts: ArtifactRecord[];
   readiness: ReleaseReadiness;
   candidate: ReleaseCandidateManifest;
+  sourceManifest?: ReleaseSourceManifest;
   requestedAt: string;
   expiresAt: string;
 }): ReleaseApprovalRequest {
@@ -126,15 +194,19 @@ export function createReleaseApprovalRequest(input: {
   if (artifacts.length !== artifactIds.length) throw new Error("Candidate artifact set is incomplete");
 
   const evidenceRefs = [...new Set(input.candidate.evidenceRefs)].sort();
+  const sourceManifestDigest = input.sourceManifest
+    ? releaseSourceManifestDigest({ manifest: input.sourceManifest, targetLanes: input.targetLanes })
+    : undefined;
   const candidateFingerprint = releaseCandidateFingerprint({
     projectId: input.projectId,
     targetLanes: input.targetLanes,
     artifacts,
     evidenceRefs,
+    sourceManifestDigest,
   });
 
   return {
-    schemaVersion: "1",
+    schemaVersion: sourceManifestDigest ? "2" : "1",
     requestId: input.requestId,
     projectId: input.projectId,
     purpose: "release-candidate",
@@ -142,6 +214,7 @@ export function createReleaseApprovalRequest(input: {
     targetLanes: [...new Set(input.targetLanes)].sort(),
     artifactIds,
     evidenceRefs,
+    ...(sourceManifestDigest ? { sourceManifestDigest } : {}),
     requestedAt: new Date(requested).toISOString(),
     expiresAt: new Date(expires).toISOString(),
   };
@@ -153,6 +226,9 @@ export async function verifyReleaseApprovalDecision(input: {
   verifier: ApprovalVerifier;
   verificationTime: string;
 }): Promise<VerifiedReleaseApprovalDecision> {
+  if (input.request.schemaVersion === "2" && !/^sha256:[a-f0-9]{64}$/i.test(input.request.sourceManifestDigest ?? "")) {
+    throw new Error("Source-bound approval request is missing a valid source manifest digest");
+  }
   if (input.attestation.requestId !== input.request.requestId) throw new Error("Approval request ID mismatch");
   if (input.attestation.candidateFingerprint !== input.request.candidateFingerprint) throw new Error("Approval fingerprint mismatch");
   if (!input.attestation.opaqueProof.trim()) throw new Error("Approval proof is required");
