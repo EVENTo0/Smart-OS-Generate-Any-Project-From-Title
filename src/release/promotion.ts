@@ -3,7 +3,7 @@ import type { VerifiedReleaseApprovalDecision } from "../approval/release-approv
 import type { ReleaseCandidateManifest } from "./candidate";
 
 export interface ReleaseCandidatePromotion {
-  schemaVersion: "1";
+  schemaVersion: "1" | "2";
   releaseCandidateId: string;
   projectId: string;
   version: string;
@@ -16,6 +16,7 @@ export interface ReleaseCandidatePromotion {
   targetLanes: PlatformLane[];
   artifactIds: string[];
   evidenceRefs: string[];
+  sourceManifestDigest?: string;
   publicPublishAuthorized: false;
 }
 
@@ -41,6 +42,9 @@ export function promoteReleaseCandidate(input: {
   if (input.approval.decision !== "approve") throw new Error("Verified approval decision must be approve");
   if (input.approval.projectId !== input.candidate.projectId) throw new Error("Approval project mismatch");
   if (input.approval.candidateFingerprint !== input.candidateFingerprint) throw new Error("Approval fingerprint mismatch");
+  if (input.approval.sourceManifestDigest && !/^sha256:[a-f0-9]{64}$/i.test(input.approval.sourceManifestDigest)) {
+    throw new Error("Invalid approved source manifest digest");
+  }
   if (!input.candidate.artifactIds.length || !input.candidate.evidenceRefs.length) {
     throw new Error("Release candidate promotion requires bound artifacts and evidence");
   }
@@ -51,7 +55,7 @@ export function promoteReleaseCandidate(input: {
   }
 
   return {
-    schemaVersion: "1",
+    schemaVersion: input.approval.sourceManifestDigest ? "2" : "1",
     releaseCandidateId: input.releaseCandidateId,
     projectId: input.candidate.projectId,
     version: input.version,
@@ -64,6 +68,7 @@ export function promoteReleaseCandidate(input: {
     targetLanes: [...new Set(input.targetLanes)].sort(),
     artifactIds: [...new Set(input.candidate.artifactIds)].sort(),
     evidenceRefs: [...new Set(input.candidate.evidenceRefs)].sort(),
+    ...(input.approval.sourceManifestDigest ? { sourceManifestDigest: input.approval.sourceManifestDigest } : {}),
     publicPublishAuthorized: false,
   };
 }
