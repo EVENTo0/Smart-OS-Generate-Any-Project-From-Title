@@ -12,12 +12,10 @@ RUNNER_ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["ru
 ENDPOINT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["endpoint"])' "$META_FILE")"
 
 TOOLS=()
-command -v xcodebuild >/dev/null 2>&1 && TOOLS+=("xcodebuild")
-command -v security >/dev/null 2>&1 && TOOLS+=("security")
-command -v gradle >/dev/null 2>&1 && TOOLS+=("gradle")
+for tool in git node npm xcodebuild security gradle java jarsigner; do
+  command -v "$tool" >/dev/null 2>&1 && TOOLS+=("$tool")
+done
 [[ -x ./gradlew ]] && TOOLS+=("./gradlew")
-command -v java >/dev/null 2>&1 && TOOLS+=("java")
-command -v jarsigner >/dev/null 2>&1 && TOOLS+=("jarsigner")
 
 SECRET_REFS=()
 for name in \
