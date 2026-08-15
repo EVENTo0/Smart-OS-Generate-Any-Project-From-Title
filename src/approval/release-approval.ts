@@ -62,6 +62,7 @@ export interface VerifiedReleaseApprovalDecision {
   actorId: string;
   verifierId: string;
   verifiedAt: string;
+  sourceManifestDigest?: string;
 }
 
 function isoMillis(value: string, label: string): number {
@@ -255,5 +256,6 @@ export async function verifyReleaseApprovalDecision(input: {
     actorId: actor.actorId,
     verifierId: actor.verifierId,
     verifiedAt: new Date(verificationTime).toISOString(),
+    ...(input.request.sourceManifestDigest ? { sourceManifestDigest: input.request.sourceManifestDigest } : {}),
   };
 }
