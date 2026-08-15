@@ -29,8 +29,8 @@ export interface SigningExecutionPreflight {
   storeUploadAuthorized: false;
 }
 
-function requiredTool(lane: SigningLane): string {
-  return lane === "android" ? "gradle" : "xcodebuild";
+function requiredTools(lane: SigningLane): string[] {
+  return lane === "android" ? ["gradle", "jarsigner"] : ["xcodebuild", "security"];
 }
 
 export function evaluateSigningExecutionPreflight(input: {
@@ -45,8 +45,11 @@ export function evaluateSigningExecutionPreflight(input: {
   if (!runner.lanes.includes(request.lane)) blockers.push("runner-lane-unsupported");
   if (request.lane === "ios" && runner.hostPlatform !== "macos") blockers.push("ios-requires-macos");
 
-  const tool = requiredTool(request.lane);
-  if (!runner.tools.includes(tool)) blockers.push(`missing-tool:${tool}`);
+  for (const tool of requiredTools(request.lane)) {
+    if (!runner.tools.includes(tool) && !(tool === "gradle" && runner.tools.includes("./gradlew"))) {
+      blockers.push(`missing-tool:${tool}`);
+    }
+  }
 
   const requestProviders = [...new Set(request.secretRefs.map((ref) => ref.provider))];
   if (requestProviders.length !== 1 || requestProviders[0] !== secretCatalog.provider) {
