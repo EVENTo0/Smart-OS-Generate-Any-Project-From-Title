@@ -19,9 +19,9 @@ export interface SecureSigningRequest {
   lane: SigningLane;
   runnerId: string;
   command: {
-    executable: string;
+    executable: "smart-os-sign-android" | "smart-os-sign-ios";
     args: string[];
-    workingDirectory: string;
+    workingDirectory: ".";
   };
   outputPath: string;
   secretRefs: SigningSecretReference[];
@@ -54,6 +54,7 @@ function requiredSecretNames(lane: SigningLane): string[] {
     : [
         "APPLE_DEVELOPMENT_TEAM_ID",
         "APPLE_SIGNING_CERTIFICATE",
+        "APPLE_SIGNING_CERTIFICATE_PASSWORD",
         "APPLE_PROVISIONING_PROFILE",
       ];
 }
@@ -62,22 +63,16 @@ function commandFor(lane: SigningLane, projectId: string) {
   const workspace = `workspaces/${projectId}/build`;
   if (lane === "android") {
     return {
-      executable: "./gradlew",
-      args: ["bundleRelease"],
-      workingDirectory: `${workspace}/android`,
+      executable: "smart-os-sign-android" as const,
+      args: [`${workspace}/android`],
+      workingDirectory: "." as const,
       outputPath: `${workspace}/android/app/build/outputs/bundle/release/app-release.aab`,
     };
   }
   return {
-    executable: "xcodebuild",
-    args: [
-      "-workspace", "App/App.xcworkspace",
-      "-scheme", "App",
-      "-configuration", "Release",
-      "-archivePath", "build/SmartOS.xcarchive",
-      "archive",
-    ],
-    workingDirectory: `${workspace}/ios`,
+    executable: "smart-os-sign-ios" as const,
+    args: [`${workspace}/ios`],
+    workingDirectory: "." as const,
     outputPath: `${workspace}/ios/build/SmartOS.xcarchive`,
   };
 }
