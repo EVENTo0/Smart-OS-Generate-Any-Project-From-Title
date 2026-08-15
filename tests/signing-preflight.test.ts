@@ -36,7 +36,7 @@ test("Android signing preflight becomes ready using references only", () => {
       runnerId: "secure-android-runner",
       hostPlatform: "linux",
       lanes: ["android"],
-      tools: ["gradle"],
+      tools: ["gradle", "jarsigner"],
       secretProviders: ["external-vault"],
       workspaceOnly: true,
       publicPublishAuthorized: false,
@@ -64,7 +64,7 @@ test("iOS signing preflight requires macOS and reports missing references withou
       runnerId: "wrong-host",
       hostPlatform: "linux",
       lanes: ["ios"],
-      tools: ["xcodebuild"],
+      tools: ["xcodebuild", "security"],
       secretProviders: ["github-actions"],
       workspaceOnly: true,
       publicPublishAuthorized: false,
@@ -79,5 +79,6 @@ test("iOS signing preflight requires macOS and reports missing references withou
     "APPLE_DEVELOPMENT_TEAM_ID",
     "APPLE_PROVISIONING_PROFILE",
     "APPLE_SIGNING_CERTIFICATE",
+    "APPLE_SIGNING_CERTIFICATE_PASSWORD",
   ].sort());
 });
