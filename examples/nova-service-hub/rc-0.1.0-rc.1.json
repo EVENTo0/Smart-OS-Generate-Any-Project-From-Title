@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "2",
+  "projectId": "nova-service-hub",
+  "version": "0.1.0-rc.1",
+  "releaseCandidateId": "d43a199f-9cd0-4ded-84ee-47c75d5ed66f",
+  "candidateFingerprint": "sha256:fe2f2e77bfcac6b7b74ed6221e53ec8554ce4b4d650b826f213f5a97f1d1171b",
+  "approvalRequestId": "76cb807d-ded3-44e6-9238-83f89348f1e6",
+  "targetLanes": ["web"],
+  "sourceManifestDigest": "sha256:3357d571b9ffd41aad63a79e75e8ca6f11c548bf9e86138b4c94c3536095a8c4",
+  "sourceManifest": {
+    "schemaVersion": "1",
+    "lanes": [
+      {
+        "lane": "web",
+        "sourceKind": "git-object",
+        "sourceCommitSha": "13d6883925b737e04d85960356575271f669b42a",
+        "sourceObjectPath": "control-app/demos/nova-service-hub/index.html",
+        "sourceObjectSha": "49ffd83c076677aa3d3dd63c3a6de2438019c50a",
+        "materializerId": "universal-product-web-mobile-v1"
+      }
+    ]
+  },
+  "artifacts": [
+    "nova-web-preview-manifest",
+    "nova-live-validation-report"
+  ],
+  "evidenceRefs": [
+    "git:blob:control-app/demos/nova-service-hub/index.html:49ffd83c076677aa3d3dd63c3a6de2438019c50a",
+    "git:blob:examples/nova-service-hub/live-validation.json:86a0d17d5ba0d4a3ddc50c04a113867579b8bb7e",
+    "vercel:dpl_BNvqHUZv2C5CX8oghoJQ5H1PUZj2:/demos/nova-service-hub/:http-200"
+  ],
+  "status": "promoted",
+  "publicPublishAuthorized": false,
+  "storeUploadAuthorized": false
+}

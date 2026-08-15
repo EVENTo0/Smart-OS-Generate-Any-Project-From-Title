@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1",
+  "projectId": "snake-game",
+  "releaseCandidate": "0.1.0-rc.2",
+  "candidateFingerprint": "sha256:82944e75cf40c7ff3276d9c72581cc5ef117e414614db2bfcf1a840bbf1adec0",
+  "android": {
+    "githubActionsProvider": {
+      "handleId": "github-actions-android",
+      "verification": "access-denied",
+      "requiredSecretRefs": [
+        "ANDROID_UPLOAD_KEYSTORE",
+        "ANDROID_UPLOAD_KEYSTORE_PASSWORD",
+        "ANDROID_UPLOAD_KEY_ALIAS",
+        "ANDROID_UPLOAD_KEY_PASSWORD"
+      ],
+      "secretValuesStored": false
+    },
+    "githubHostedRunner": {
+      "runnerId": "github-hosted-linux",
+      "state": "blocked",
+      "blocker": "billing",
+      "evidence": "GitHub Actions annotation: job not started because recent account payments failed or spending limit needs to be increased"
+    },
+    "fallbackRunner": {
+      "runnerId": "self-hosted-linux",
+      "state": "awaiting-registration",
+      "requiredTools": ["java", "gradle"]
+    }
+  },
+  "ios": {
+    "githubActionsProvider": {
+      "handleId": "github-actions-ios",
+      "verification": "access-denied",
+      "requiredSecretRefs": [
+        "APPLE_DEVELOPMENT_TEAM_ID",
+        "APPLE_SIGNING_CERTIFICATE",
+        "APPLE_PROVISIONING_PROFILE"
+      ],
+      "secretValuesStored": false
+    },
+    "githubHostedRunner": {
+      "runnerId": "github-hosted-macos",
+      "state": "blocked",
+      "blocker": "billing"
+    },
+    "fallbackRunner": {
+      "runnerId": "self-hosted-macos",
+      "state": "awaiting-registration",
+      "requiredTools": ["xcodebuild"],
+      "requiredHost": "macos"
+    }
+  },
+  "publicPublishAuthorized": false,
+  "storeUploadAuthorized": false
+}

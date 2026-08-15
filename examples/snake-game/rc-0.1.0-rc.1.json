@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1",
+  "projectId": "snake-game",
+  "version": "0.1.0-rc.1",
+  "candidateFingerprint": "sha256:71eee6b733b138924ee177439869e6dcbf4042dd557cf6557cbb7d43ba13eb93",
+  "approvalRequestId": "640d24c4-aa18-45f7-9804-0f9d9138e143",
+  "verifierId": "supabase-auth-edge",
+  "targetLanes": ["web"],
+  "artifactIds": [
+    "local-chatgpt-container-local-test-report",
+    "local-chatgpt-container-snake-web-build"
+  ],
+  "evidenceRefs": [
+    "runner/local-chatgpt-container/run/local-web-001"
+  ],
+  "status": "promoted",
+  "publicPublishAuthorized": false,
+  "notes": [
+    "This RC is scoped to Web because the verified approval request covered only the web lane.",
+    "Android/iOS store packaging requires a separately approved mobile-scoped candidate.",
+    "No TestFlight, Play Console or production publication is authorized by this record."
+  ]
+}

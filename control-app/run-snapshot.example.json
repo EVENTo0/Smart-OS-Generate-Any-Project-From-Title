@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1",
+  "projectId": "snake-game",
+  "title": "Snake game",
+  "lifecycleState": "RELEASE_CANDIDATE",
+  "targetLanes": ["web"],
+  "execution": {
+    "status": "succeeded",
+    "successfulRunnerId": "local-codex",
+    "maxAttempts": 2,
+    "attempts": [
+      {
+        "attempt": 1,
+        "runnerId": "primary-ci",
+        "outcome": "infrastructure-failure",
+        "blockerKind": "billing"
+      },
+      {
+        "attempt": 2,
+        "runnerId": "local-codex",
+        "outcome": "passed"
+      }
+    ]
+  },
+  "release": {
+    "score": 100,
+    "technicalReady": true,
+    "candidateStatus": "blocked",
+    "humanApprovalRequired": true,
+    "approvedByHuman": false,
+    "blockers": ["explicit human approval required"]
+  },
+  "artifacts": [
+    {
+      "id": "local-codex-build",
+      "kind": "build",
+      "producedBy": "local-codex",
+      "checksum": "sha256:example-build"
+    },
+    {
+      "id": "local-codex-tests",
+      "kind": "test-report",
+      "producedBy": "local-codex",
+      "checksum": "sha256:example-tests"
+    }
+  ],
+  "infrastructure": {
+    "activeBlockers": [],
+    "historicalBlockers": ["billing"]
+  },
+  "policy": {
+    "exposesSecrets": false,
+    "exposesRawLogs": false,
+    "allowsPublicPublish": false
+  }
+}

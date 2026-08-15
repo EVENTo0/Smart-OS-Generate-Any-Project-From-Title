@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1",
+  "projectId": "snake-game",
+  "candidateVersion": "0.1.0-rc.2",
+  "candidateFingerprint": "sha256:82944e75cf40c7ff3276d9c72581cc5ef117e414614db2bfcf1a840bbf1adec0",
+  "approvalRequestId": "f4911db3-d3ea-4ed4-9697-374ca5703167",
+  "targetLanes": ["android", "ios"],
+  "artifacts": [
+    {
+      "id": "github-artifact-9195577810",
+      "kind": "build",
+      "name": "snake-android-debug-apk",
+      "checksum": "sha256:e57c68b15895615257426b455efb008aa49236c63dae94e2459905298e21c20b",
+      "producedBy": "github-actions:run-31736849918"
+    },
+    {
+      "id": "github-artifact-9195435022",
+      "kind": "test-report",
+      "name": "snake-android-runtime-evidence",
+      "checksum": "sha256:7e307afd37dabe17c262f008e65f080b29e3fbf922aed01d5c45e48a4701d5cd",
+      "producedBy": "github-actions:run-31736312519"
+    },
+    {
+      "id": "github-artifact-9195590063",
+      "kind": "build",
+      "name": "snake-ios-simulator-app",
+      "checksum": "sha256:ca330fb171ca24a8b9260665b26351d2c8808f50555eed2795fca2fb3cb37dbe",
+      "producedBy": "github-actions:run-31736453074"
+    },
+    {
+      "id": "github-artifact-9195587610",
+      "kind": "test-report",
+      "name": "snake-ios-simulator-evidence",
+      "checksum": "sha256:1bf1b9be7fe6909c0eff1c3f6ac7ddc9d0026694ba6038cab5e9614698acf1c0",
+      "producedBy": "github-actions:run-31736453074"
+    }
+  ],
+  "evidenceRefs": [
+    "git:blob:src/implementation/generator.ts:1e471fcaf4aa1006cc51d7eeda842d3ef50e189e",
+    "github-actions:run:31736312519",
+    "github-actions:run:31736453074",
+    "github-actions:run:31736849918"
+  ],
+  "implementationProvenance": {
+    "generatorBlobSha": "1e471fcaf4aa1006cc51d7eeda842d3ef50e189e",
+    "matchesCurrentBranch": true,
+    "matchesAndroidBuildCommit": true,
+    "matchesIosBuildCommit": true
+  },
+  "approvalStatus": "pending",
+  "publicPublishAuthorized": false
+}

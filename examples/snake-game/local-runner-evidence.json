@@ -1,0 +1,33 @@
+{
+  "projectId": "snake-game",
+  "runnerId": "local-chatgpt-container",
+  "runnerKind": "local-shell",
+  "runId": "local-web-001",
+  "sourceArtifactDigest": "sha256:71e2b2db526ad8fa1fb83ebf981729d94d18cde26cfb0139449958235800a123",
+  "conclusion": "success",
+  "commands": [
+    {
+      "commandId": "web-build",
+      "status": "passed",
+      "logRef": "runner/local-chatgpt-container/run/local-web-001/logs/node-check.txt",
+      "artifactRefs": ["snake-web-build", "local-test-report"],
+      "summary": "node --check src/main.js exited 0"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "snake-web-build",
+      "name": "snake-generated-web-build",
+      "kind": "build",
+      "checksum": "sha256:daba5a8dd612dbd9f811065aa64746a1dea3ce63385ac0c5c1ca6c08a86e7762"
+    },
+    {
+      "id": "local-test-report",
+      "name": "local-node-check-report",
+      "kind": "test-report",
+      "checksum": "sha256:2cba560f6f9b34165fe4dae526f41ff05657ebafec619e2a53665a7a86444dba"
+    }
+  ],
+  "requiredCommandIds": ["web-build"],
+  "requiredArtifactKinds": ["build", "test-report"]
+}

@@ -1,0 +1,18 @@
+{
+  "projectId": "nova-service-hub",
+  "title": "NOVA Service Hub",
+  "description": "Design a service website and mobile application with catalog, booking and customer request flow.",
+  "mode": "new-idea",
+  "domain": "application",
+  "targetPlatforms": ["web", "android", "ios"],
+  "requirements": [
+    "responsive website",
+    "mobile-first app experience",
+    "service catalog",
+    "customer request flow",
+    "safe local demo submission",
+    "no production publishing"
+  ],
+  "expectedTemplate": "universal-product-web-mobile-v1",
+  "sourceGeneratorCommit": "7802c3524dc3b91a1782e0d0e657726ef33e28e8"
+}

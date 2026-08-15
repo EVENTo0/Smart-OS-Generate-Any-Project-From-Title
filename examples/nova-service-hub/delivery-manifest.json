@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1",
+  "projectId": "nova-service-hub",
+  "title": "NOVA Service Hub",
+  "deliveryState": "preview-delivered",
+  "deliveredAt": "2026-08-15T05:21:00Z",
+  "targetPlatforms": ["web", "android", "ios"],
+  "deliverables": [
+    {
+      "kind": "website-preview",
+      "path": "/demos/nova-service-hub/",
+      "status": "ready"
+    },
+    {
+      "kind": "mobile-app-preview",
+      "path": "/demos/nova-service-hub/",
+      "mode": "app",
+      "status": "ready"
+    },
+    {
+      "kind": "service-catalog",
+      "status": "ready"
+    },
+    {
+      "kind": "customer-request-flow",
+      "status": "ready",
+      "note": "Demo-only; no production order, payment, or external message is created."
+    }
+  ],
+  "acceptance": {
+    "websiteLoads": true,
+    "appModeAvailable": true,
+    "serviceSelectionWorks": true,
+    "requestFormWorks": true,
+    "latestPreviewHttpStatus": 200
+  },
+  "releasePolicy": {
+    "productionPublished": false,
+    "storePublished": false,
+    "publicPublishAuthorized": false,
+    "requiresSeparateProductionApproval": true
+  }
+}

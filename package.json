@@ -1,0 +1,12 @@
+{
+  "name": "smart-os-generate-any-project-from-title",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0"
+  }
+}

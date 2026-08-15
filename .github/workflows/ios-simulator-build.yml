@@ -1,0 +1,63 @@
+name: iOS Simulator Validation
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/generate-snake-ci.ts'
+      - 'scripts/ios-simulator-smoke.sh'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/ios-simulator-build.yml'
+concurrency:
+  group: ios-simulator-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  simulator:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install root dependencies
+        run: npm install
+      - name: Generate Snake web implementation
+        run: npx tsx scripts/generate-snake-ci.ts
+      - name: Create Capacitor iOS wrapper
+        run: |
+          rm -rf .ci-native/snake-capacitor-ios
+          mkdir -p .ci-native/snake-capacitor-ios/www
+          cp -R .ci-workspaces/snake-game/build/. .ci-native/snake-capacitor-ios/www/
+          cd .ci-native/snake-capacitor-ios
+          npm init -y
+          npm install --save-exact @capacitor/core@8.4.2 @capacitor/cli@8.4.2 @capacitor/ios@8.4.2
+          node -e "require('fs').writeFileSync('capacitor.config.json', JSON.stringify({appId:'ai.smartos.snake',appName:'SMART OS Snake',webDir:'www'}, null, 2))"
+          npx cap add ios
+      - name: Build iOS Simulator app
+        run: |
+          xcodebuild \
+            -project .ci-native/snake-capacitor-ios/ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath .ci-native/snake-capacitor-ios/derived \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+      - name: Launch on iPhone Simulator
+        run: |
+          chmod +x scripts/ios-simulator-smoke.sh
+          scripts/ios-simulator-smoke.sh .ci-native/snake-capacitor-ios/derived/Build/Products/Debug-iphonesimulator/App.app
+      - name: Publish iOS Simulator evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: snake-ios-simulator-evidence
+          path: .ci-evidence/ios-simulator
+          if-no-files-found: error
+      - name: Publish iOS Simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: snake-ios-simulator-app
+          path: .ci-native/snake-capacitor-ios/derived/Build/Products/Debug-iphonesimulator/App.app
+          if-no-files-found: error

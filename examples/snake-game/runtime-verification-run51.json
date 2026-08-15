@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "projectId": "snake-game",
+  "source": {
+    "githubActionsRunId": "31731399216",
+    "commitSha": "dc8674d33c012d261916a16fc343d82231bbc7da",
+    "artifactId": "9193363366",
+    "artifactName": "snake-generated-web-build",
+    "artifactDigest": "sha256:e28f50dc5693c4f917b5eaef3dd8e05467997077cb75cc60b3002a0c6af46f08"
+  },
+  "environment": {
+    "browser": "Chromium headless via Playwright",
+    "networkMode": "offline-direct-artifact-load",
+    "note": "localhost navigation was blocked by the execution environment, so the exact generated index.html and src/main.js from the artifact were loaded directly into an isolated browser page."
+  },
+  "checks": {
+    "pageTitle": "SMART OS Game",
+    "canvasPresent": true,
+    "keyboardInteractionChangedFrame": true,
+    "pointerSwipeChangedFrame": true,
+    "consoleErrors": [],
+    "pageErrors": []
+  },
+  "frameHashes": {
+    "initial": "62692465017016e7",
+    "afterKeyboard": "c7bc34b6e0b812d2",
+    "afterPointer": "7b014d55fd5d9bfb"
+  },
+  "result": "passed",
+  "limitations": [
+    "This verifies browser runtime and interaction behavior for the generated Web artifact, not Android/iOS packaging or store distribution.",
+    "Public deployment was not performed."
+  ]
+}

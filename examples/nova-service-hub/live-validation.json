@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1",
+  "validationId": "nova-service-hub-live-2026-08-15",
+  "projectId": "nova-service-hub",
+  "title": "NOVA Service Hub",
+  "input": {
+    "mode": "new-idea",
+    "description": "Design a service website and mobile application with catalog, booking and customer request flow.",
+    "targetPlatforms": ["web", "android", "ios"]
+  },
+  "pipeline": {
+    "classifiedDomain": "application",
+    "implementationTemplate": "universal-product-web-mobile-v1",
+    "generatorCommit": "7802c3524dc3b91a1782e0d0e657726ef33e28e8",
+    "generatorTestCommit": "5be4791b54a3309ef401bc88a90eae7b63f6b881",
+    "liveDemoCommit": "919da7049a86fca31ab096fe2bc51d4ee80d5627",
+    "projectRecordCommit": "f959f2c4cbbd2fde821a24b60978473823fbc9ad"
+  },
+  "livePreview": {
+    "deploymentId": "dpl_BNvqHUZv2C5CX8oghoJQ5H1PUZj2",
+    "deploymentTarget": "preview",
+    "state": "READY",
+    "path": "/demos/nova-service-hub/",
+    "httpStatus": 200,
+    "verifiedContent": [
+      "Website/App mode switch",
+      "responsive service catalog",
+      "service selection",
+      "customer request form",
+      "mobile app dashboard",
+      "local-only demo confirmation"
+    ]
+  },
+  "safety": {
+    "createsProductionOrder": false,
+    "takesPayment": false,
+    "sendsExternalMessage": false,
+    "publicPublishAuthorized": false,
+    "touchesSiblingRepository": false
+  },
+  "result": "passed"
+}

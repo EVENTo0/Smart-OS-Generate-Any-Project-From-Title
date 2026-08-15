@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1",
+  "projectId": "snake-game",
+  "version": "0.1.0-rc.2",
+  "releaseCandidateId": "2fe3775d-f2c4-43c7-8611-0995df7b90b0",
+  "candidateFingerprint": "sha256:82944e75cf40c7ff3276d9c72581cc5ef117e414614db2bfcf1a840bbf1adec0",
+  "source": {
+    "generatorBlobSha": "1e471fcaf4aa1006cc51d7eeda842d3ef50e189e"
+  },
+  "targets": [
+    {
+      "lane": "android",
+      "kind": "android-aab",
+      "runnerRequirements": ["linux-or-macos", "jdk", "android-sdk", "gradle"],
+      "workingDirectory": "workspaces/snake-game/android",
+      "command": ["./gradlew", "bundleRelease"],
+      "expectedOutput": "workspaces/snake-game/android/app/build/outputs/bundle/release/app-release.aab",
+      "requiredSecretRefs": [
+        "ANDROID_UPLOAD_KEYSTORE",
+        "ANDROID_UPLOAD_KEYSTORE_PASSWORD",
+        "ANDROID_UPLOAD_KEY_ALIAS",
+        "ANDROID_UPLOAD_KEY_PASSWORD"
+      ],
+      "executionStatus": "blocked-awaiting-secure-signing-context"
+    },
+    {
+      "lane": "ios",
+      "kind": "ios-archive",
+      "runnerRequirements": ["macos", "xcode"],
+      "workingDirectory": "workspaces/snake-game/ios",
+      "command": [
+        "xcodebuild",
+        "-workspace", "App/App.xcworkspace",
+        "-scheme", "App",
+        "-configuration", "Release",
+        "-archivePath", "build/SmartOS.xcarchive",
+        "archive"
+      ],
+      "expectedOutput": "workspaces/snake-game/ios/build/SmartOS.xcarchive",
+      "requiredSecretRefs": [
+        "APPLE_DEVELOPMENT_TEAM_ID",
+        "APPLE_SIGNING_CERTIFICATE",
+        "APPLE_PROVISIONING_PROFILE"
+      ],
+      "executionStatus": "blocked-awaiting-secure-signing-context"
+    }
+  ],
+  "policy": {
+    "storeUploadAuthorized": false,
+    "testFlightUploadAuthorized": false,
+    "playConsoleUploadAuthorized": false,
+    "productionPublishAuthorized": false,
+    "secretValuesStoredInRepository": false
+  }
+}
