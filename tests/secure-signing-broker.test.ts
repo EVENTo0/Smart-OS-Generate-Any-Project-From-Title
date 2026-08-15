@@ -20,7 +20,7 @@ const promotion: ReleaseCandidatePromotion = {
   publicPublishAuthorized: false,
 };
 
-test("secure signing request contains references only and never authorizes store publishing", () => {
+test("secure signing request contains references only and uses runner-local adapters", () => {
   const request = createSecureSigningRequest({
     requestId: "sign-android-rc2",
     promotion,
@@ -28,17 +28,17 @@ test("secure signing request contains references only and never authorizes store
     runnerId: "secure-android-runner",
     provider: "github-actions",
   });
-
   assert.equal(request.policy.browserCanResolveSecrets, false);
   assert.equal(request.policy.serializeSecretValues, false);
   assert.equal(request.policy.publicPublishAuthorized, false);
   assert.equal(request.policy.storeUploadAuthorized, false);
-  assert.equal(request.command.executable, "./gradlew");
+  assert.equal(request.command.executable, "smart-os-sign-android");
+  assert.equal(request.command.workingDirectory, ".");
   assert.ok(request.secretRefs.every((ref) => ref.name.startsWith("ANDROID_")));
   assert.equal(JSON.stringify(request).includes("secretValue"), false);
 });
 
-test("signing readiness reports only missing secret reference names", () => {
+test("signing readiness reports only missing Apple secret reference names", () => {
   const request = createSecureSigningRequest({
     requestId: "sign-ios-rc2",
     promotion,
@@ -48,7 +48,11 @@ test("signing readiness reports only missing secret reference names", () => {
   });
   const readiness = evaluateSigningReadiness(request, ["APPLE_DEVELOPMENT_TEAM_ID"]);
   assert.equal(readiness.ready, false);
-  assert.deepEqual(readiness.missingSecretRefs, ["APPLE_SIGNING_CERTIFICATE", "APPLE_PROVISIONING_PROFILE"]);
+  assert.deepEqual(readiness.missingSecretRefs, [
+    "APPLE_SIGNING_CERTIFICATE",
+    "APPLE_SIGNING_CERTIFICATE_PASSWORD",
+    "APPLE_PROVISIONING_PROFILE",
+  ]);
   assert.equal(readiness.publicPublishAuthorized, false);
   assert.equal(readiness.storeUploadAuthorized, false);
 });
