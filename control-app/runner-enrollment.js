@@ -19,8 +19,9 @@ function setStatus(message, good = false) {
 
 function fullToolchainReady(item) {
   const tools = new Set(Array.isArray(item.tools) ? item.tools : []);
-  if (item.lane === 'android') return (tools.has('gradle') || tools.has('./gradlew')) && tools.has('jarsigner');
-  if (item.lane === 'ios') return item.host_platform === 'macos' && tools.has('xcodebuild') && tools.has('security');
+  const sourceTools = tools.has('git') && tools.has('node') && tools.has('npm');
+  if (item.lane === 'android') return sourceTools && (tools.has('gradle') || tools.has('./gradlew')) && tools.has('jarsigner');
+  if (item.lane === 'ios') return sourceTools && item.host_platform === 'macos' && tools.has('xcodebuild') && tools.has('security');
   return false;
 }
 
@@ -103,7 +104,7 @@ async function refreshStatus() {
     listEl.innerHTML = attestations.map((item) => {
       const heartbeat = item.last_heartbeat_at ? new Date(item.last_heartbeat_at).toLocaleString() : 'none';
       const blocker = item.blocker_category ? ` · blocker ${item.blocker_category}` : '';
-      const toolchain = fullToolchainReady(item) ? 'full signing toolchain' : 'toolchain incomplete';
+      const toolchain = fullToolchainReady(item) ? 'source-bound signing ready' : 'toolchain incomplete';
       return `<div class="attempt"><strong>${item.runner_id}</strong> · ${item.lane} · ${item.state}${blocker}<br><span class="muted">${item.host_platform} · ${toolchain} · heartbeat ${heartbeat}</span></div>`;
     }).join('');
     const usable = attestations.some((item) => item.state === 'available' && fullToolchainReady(item));
