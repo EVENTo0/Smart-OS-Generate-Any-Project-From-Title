@@ -43,6 +43,19 @@
     <p class="muted">Runner enrollment authorizes workspace-only signing execution. It never authorizes Play Console, TestFlight, production publishing, or release promotion.</p>
   </section>
 
+  <section class="card" id="signingControl">
+    <div class="row"><strong>Release signing queue</strong><span class="status warn" id="signingJobStatus">SIGN IN REQUIRED</span></div>
+    <p class="muted">Issue an Android AAB or iOS XCArchive signing job only after a matching runner is enrolled, has a fresh heartbeat, the complete signing toolchain, and all required secret references locally.</p>
+    <div id="signingCandidate" class="muted">Sign in above to load promoted release candidates.</div>
+    <div class="auth-actions">
+      <button id="issueAndroidSigningJob">Issue Android AAB job</button>
+      <button id="issueIosSigningJob" class="secondary">Issue iOS XCArchive job</button>
+    </div>
+    <button id="refreshSigningJobs" class="secondary" style="margin-top:8px">Refresh signing jobs</button>
+    <div id="signingJobsList" class="muted" style="margin-top:10px">No signing status loaded.</div>
+    <p class="muted">A successful signing job records only package digest and size. Store upload and production publication remain locked and require a later explicit gate.</p>
+  </section>
+
   <section class="card">
     <label for="title">Project title or idea</label>
     <input id="title" value="Snake game" autocomplete="off">
@@ -77,5 +90,6 @@
 </main>
 <script type="module" src="./app.js"></script>
 <script type="module" src="./runner-enrollment.js"></script>
+<script type="module" src="./signing-control.js"></script>
 </body>
 </html>
