@@ -3,7 +3,21 @@ set -euo pipefail
 set +x
 
 WORKSPACE="${1:?Android workspace path required}"
-[[ "$WORKSPACE" =~ ^workspaces/[A-Za-z0-9._:-]+/build/android$ ]] || { echo "Unsafe Android workspace path" >&2; exit 2; }
+STATE_DIR="${SMART_OS_STATE_DIR:-$HOME/.smart-os}"
+WORKSPACE="$(python3 - "$WORKSPACE" <<'PY'
+import os,sys
+print(os.path.realpath(sys.argv[1]))
+PY
+)"
+STATE_DIR="$(python3 - "$STATE_DIR" <<'PY'
+import os,sys
+print(os.path.realpath(sys.argv[1]))
+PY
+)"
+case "$WORKSPACE" in
+  "$STATE_DIR"/signing-worktrees/*/source/.smartos-native/snake-capacitor/android) ;;
+  *) echo "Unsafe Android source-bound workspace path" >&2; exit 2 ;;
+esac
 [[ -d "$WORKSPACE" ]] || { echo "Android workspace does not exist" >&2; exit 2; }
 
 : "${ANDROID_UPLOAD_KEYSTORE:?ANDROID_UPLOAD_KEYSTORE is required}"
@@ -32,9 +46,9 @@ fi
 
 pushd "$WORKSPACE" >/dev/null
 if [[ -x ./gradlew ]]; then
-  ./gradlew bundleRelease
+  ./gradlew bundleRelease --no-daemon
 elif command -v gradle >/dev/null 2>&1; then
-  gradle bundleRelease
+  gradle bundleRelease --no-daemon
 else
   echo "Gradle or ./gradlew is required" >&2
   exit 2
@@ -52,7 +66,7 @@ jarsigner \
   -keypass "$ANDROID_UPLOAD_KEY_PASSWORD" \
   "$AAB" \
   "$ANDROID_UPLOAD_KEY_ALIAS" >/dev/null
-jarsigner -verify "$AAB" >/dev/null
+jarsigner -verify -strict "$AAB" >/dev/null
 
 printf '%s\n' "$WORKSPACE/$AAB"
 popd >/dev/null
